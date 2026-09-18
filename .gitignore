@@ -1,0 +1,40 @@
+# Pixi
+.pixi/
+
+# Virtual environments
+.venv/
+venv/
+.env/
+.envrc
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+.eggs/
+dist/
+build/
+pip-wheel-metadata/
+
+# Testing / typing / tools
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+*~
+
+# Jupyter
+.ipynb_checkpoints/
