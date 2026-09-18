@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "arm-analyzer"
+version = "0.1.0"
+description = "Single-arm speed/torque analysis with lumped motor and gearbox masses"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.11",
+    "pin>=4.0",  # Pinocchio (PyPI name); conda-forge name is "pinocchio"
+]
+
+[project.optional-dependencies]
+gui = [
+    "fastapi>=0.109",
+    "uvicorn>=0.27",
+]
+dev = ["pytest>=7.0", "httpx>=0.25"]
+# Cartesian trajectories. Pixi installs these from conda-forge (ndcurves,
+# pink, proxsuite); pip users need this extra.
+kinematics = ["ndcurves>=2.3", "pin-pink>=4.0", "proxsuite>=0.6"]
+
+[project.scripts]
+arm-analyzer-gui = "arm_analyzer.server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+# --- Pixi (https://pixi.sh): conda-forge env + editable local package ---
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["osx-arm64", "osx-64", "linux-64", "linux-aarch64", "win-64"]
+
+[tool.pixi.dependencies]
+python = "3.14.*"
+numpy = ">=1.24"
+scipy = ">=1.11"
+pinocchio = ">=4.0,<5"
+ndcurves = ">=2.3.0,<3"
+pink = ">=4.4.0,<5"
+proxsuite = ">=0.7.3,<0.8"
+
+[tool.pixi.pypi-dependencies]
+"arm-analyzer" = { path = ".", editable = true }
+
+[tool.pixi.environments]
+default = { features = ["gui"] }
+dev = { features = ["dev", "gui"] }
+
+[tool.pixi.tasks]
+gui = "python -m uvicorn arm_analyzer.server:app --host 127.0.0.1 --port 8766"
+examples = "python scripts/make_simple_6dof.py && python scripts/make_kr_style.py && python scripts/make_wam_style.py && python scripts/make_ur_style.py && python scripts/make_palletizer.py && python scripts/make_example_trajectories.py"
+
+[tool.pixi.feature.gui.dependencies]
+fastapi = ">=0.109"
+uvicorn = ">=0.27"
+
+[tool.pixi.feature.dev.dependencies]
+pytest = ">=7.0"
+httpx = ">=0.25"
+
+[tool.pixi.feature.dev.tasks]
+test = "pytest -q"

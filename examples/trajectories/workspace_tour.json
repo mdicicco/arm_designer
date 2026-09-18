@@ -1,0 +1,945 @@
+{
+  "format": "cartesian",
+  "label": "Workspace tour: 10-spot pick and place (cartesian)",
+  "units": "deg",
+  "limits": {
+    "linear_speed": 0.15,
+    "smooth_speed": 0.5,
+    "angular_speed": 120
+  },
+  "waypoints": [
+    {
+      "name": "home",
+      "xyz": [
+        0.4,
+        0.0,
+        0.55
+      ],
+      "rpy": [
+        0,
+        180,
+        0
+      ]
+    },
+    {
+      "name": "01_down_front_face",
+      "xyz": [
+        0.4,
+        0.0,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        180.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "01_down_front_approach",
+      "xyz": [
+        0.5,
+        0.0,
+        0.23
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        180.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "01_down_front",
+      "xyz": [
+        0.5,
+        0.0,
+        0.15
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        180.0
+      ],
+      "path": "linear",
+      "dwell": 0.3
+    },
+    {
+      "name": "01_down_front_retract",
+      "xyz": [
+        0.5,
+        0.0,
+        0.23
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        180.0
+      ],
+      "path": "linear"
+    },
+    {
+      "name": "01_down_front_leave",
+      "xyz": [
+        0.4,
+        0.0,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        180.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "02_down_far_front_spun_face",
+      "xyz": [
+        0.3864,
+        0.1035,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        -165.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "02_down_far_front_spun_approach",
+      "xyz": [
+        0.5796,
+        0.1553,
+        0.28
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        105.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "02_down_far_front_spun",
+      "xyz": [
+        0.5796,
+        0.1553,
+        0.2
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        105.0
+      ],
+      "path": "linear",
+      "dwell": 0.3
+    },
+    {
+      "name": "02_down_far_front_spun_retract",
+      "xyz": [
+        0.5796,
+        0.1553,
+        0.28
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        105.0
+      ],
+      "path": "linear"
+    },
+    {
+      "name": "02_down_far_front_spun_leave",
+      "xyz": [
+        0.3864,
+        0.1035,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        -165.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "03_out_front_left_face",
+      "xyz": [
+        0.3277,
+        0.2294,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        -145.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "03_out_front_left_stage",
+      "xyz": [
+        0.4096,
+        0.2868,
+        0.65
+      ],
+      "rpy": [
+        -35.0,
+        90.0,
+        0.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "03_out_front_left_approach",
+      "xyz": [
+        0.426,
+        0.2982,
+        0.4
+      ],
+      "rpy": [
+        -35.0,
+        90.0,
+        0.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "03_out_front_left",
+      "xyz": [
+        0.4915,
+        0.3441,
+        0.4
+      ],
+      "rpy": [
+        -35.0,
+        90.0,
+        0.0
+      ],
+      "path": "linear",
+      "dwell": 0.3
+    },
+    {
+      "name": "03_out_front_left_retract",
+      "xyz": [
+        0.426,
+        0.2982,
+        0.4
+      ],
+      "rpy": [
+        -35.0,
+        90.0,
+        0.0
+      ],
+      "path": "linear"
+    },
+    {
+      "name": "03_out_front_left_stage",
+      "xyz": [
+        0.4096,
+        0.2868,
+        0.65
+      ],
+      "rpy": [
+        -35.0,
+        90.0,
+        0.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "03_out_front_left_leave",
+      "xyz": [
+        0.3277,
+        0.2294,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        -145.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "04_up_left_overhead_face",
+      "xyz": [
+        0.1368,
+        0.3759,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        -110.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "04_up_left_overhead_stage",
+      "xyz": [
+        0.171,
+        0.4698,
+        0.65
+      ],
+      "rpy": [
+        -70.0,
+        90.0,
+        0.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "04_up_left_overhead_approach",
+      "xyz": [
+        0.1368,
+        0.3759,
+        0.82
+      ],
+      "rpy": [
+        0.0,
+        -0.0,
+        70.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "04_up_left_overhead",
+      "xyz": [
+        0.1368,
+        0.3759,
+        0.9
+      ],
+      "rpy": [
+        0.0,
+        -0.0,
+        70.0
+      ],
+      "path": "linear",
+      "dwell": 0.3
+    },
+    {
+      "name": "04_up_left_overhead_retract",
+      "xyz": [
+        0.1368,
+        0.3759,
+        0.82
+      ],
+      "rpy": [
+        0.0,
+        -0.0,
+        70.0
+      ],
+      "path": "linear"
+    },
+    {
+      "name": "04_up_left_overhead_stage",
+      "xyz": [
+        0.171,
+        0.4698,
+        0.65
+      ],
+      "rpy": [
+        -70.0,
+        90.0,
+        0.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "04_up_left_overhead_leave",
+      "xyz": [
+        0.1368,
+        0.3759,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        -110.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "05_side_left_face",
+      "xyz": [
+        -0.1035,
+        0.3864,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        -75.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "05_side_left_approach",
+      "xyz": [
+        -0.0262,
+        0.4071,
+        0.25
+      ],
+      "rpy": [
+        165.0,
+        90.0,
+        0.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "05_side_left",
+      "xyz": [
+        -0.1035,
+        0.3864,
+        0.25
+      ],
+      "rpy": [
+        165.0,
+        90.0,
+        0.0
+      ],
+      "path": "linear",
+      "dwell": 0.3
+    },
+    {
+      "name": "05_side_left_retract",
+      "xyz": [
+        -0.0262,
+        0.4071,
+        0.25
+      ],
+      "rpy": [
+        165.0,
+        90.0,
+        0.0
+      ],
+      "path": "linear"
+    },
+    {
+      "name": "05_side_left_leave",
+      "xyz": [
+        -0.1035,
+        0.3864,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        -75.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "06_down_out_rear_left_face",
+      "xyz": [
+        -0.3064,
+        0.2571,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        -40.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "06_down_out_rear_left_approach",
+      "xyz": [
+        -0.2631,
+        0.2207,
+        0.6066
+      ],
+      "rpy": [
+        180.0,
+        45.0,
+        -40.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "06_down_out_rear_left",
+      "xyz": [
+        -0.3064,
+        0.2571,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        45.0,
+        -40.0
+      ],
+      "path": "linear",
+      "dwell": 0.3
+    },
+    {
+      "name": "06_down_out_rear_left_retract",
+      "xyz": [
+        -0.2631,
+        0.2207,
+        0.6066
+      ],
+      "rpy": [
+        180.0,
+        45.0,
+        -40.0
+      ],
+      "path": "linear"
+    },
+    {
+      "name": "06_down_out_rear_left_leave",
+      "xyz": [
+        -0.3064,
+        0.2571,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        -40.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "07_side_front_right_swing1",
+      "xyz": [
+        -0.0435,
+        0.3976,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        -83.75
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "07_side_front_right_swing2",
+      "xyz": [
+        0.2435,
+        0.3173,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        -127.5
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "07_side_front_right_swing3",
+      "xyz": [
+        0.3953,
+        0.0608,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        -171.25
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "07_side_front_right_face",
+      "xyz": [
+        0.3277,
+        -0.2294,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        145.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "07_side_front_right_approach",
+      "xyz": [
+        0.4145,
+        -0.1926,
+        0.3
+      ],
+      "rpy": [
+        125.0,
+        90.0,
+        0.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "07_side_front_right",
+      "xyz": [
+        0.3686,
+        -0.2581,
+        0.3
+      ],
+      "rpy": [
+        125.0,
+        90.0,
+        0.0
+      ],
+      "path": "linear",
+      "dwell": 0.3
+    },
+    {
+      "name": "07_side_front_right_retract",
+      "xyz": [
+        0.4145,
+        -0.1926,
+        0.3
+      ],
+      "rpy": [
+        125.0,
+        90.0,
+        0.0
+      ],
+      "path": "linear"
+    },
+    {
+      "name": "07_side_front_right_leave",
+      "xyz": [
+        0.3277,
+        -0.2294,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        145.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "08_up_out_front_right_face",
+      "xyz": [
+        0.1368,
+        -0.3759,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        110.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "08_up_out_front_right_stage",
+      "xyz": [
+        0.171,
+        -0.4698,
+        0.65
+      ],
+      "rpy": [
+        70.0,
+        90.0,
+        0.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "08_up_out_front_right_approach",
+      "xyz": [
+        0.1688,
+        -0.4636,
+        0.5934
+      ],
+      "rpy": [
+        0.0,
+        45.0,
+        -70.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "08_up_out_front_right",
+      "xyz": [
+        0.1881,
+        -0.5168,
+        0.65
+      ],
+      "rpy": [
+        0.0,
+        45.0,
+        -70.0
+      ],
+      "path": "linear",
+      "dwell": 0.3
+    },
+    {
+      "name": "08_up_out_front_right_retract",
+      "xyz": [
+        0.1688,
+        -0.4636,
+        0.5934
+      ],
+      "rpy": [
+        0.0,
+        45.0,
+        -70.0
+      ],
+      "path": "linear"
+    },
+    {
+      "name": "08_up_out_front_right_stage",
+      "xyz": [
+        0.171,
+        -0.4698,
+        0.65
+      ],
+      "rpy": [
+        70.0,
+        90.0,
+        0.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "08_up_out_front_right_leave",
+      "xyz": [
+        0.1368,
+        -0.3759,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        110.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "09_out_right_face",
+      "xyz": [
+        -0.1035,
+        -0.3864,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        75.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "09_out_right_stage",
+      "xyz": [
+        -0.1294,
+        -0.483,
+        0.65
+      ],
+      "rpy": [
+        105.0,
+        90.0,
+        0.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "09_out_right_approach",
+      "xyz": [
+        -0.1217,
+        -0.454,
+        0.5
+      ],
+      "rpy": [
+        105.0,
+        90.0,
+        0.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "09_out_right",
+      "xyz": [
+        -0.1424,
+        -0.5313,
+        0.5
+      ],
+      "rpy": [
+        105.0,
+        90.0,
+        0.0
+      ],
+      "path": "linear",
+      "dwell": 0.3
+    },
+    {
+      "name": "09_out_right_retract",
+      "xyz": [
+        -0.1217,
+        -0.454,
+        0.5
+      ],
+      "rpy": [
+        105.0,
+        90.0,
+        0.0
+      ],
+      "path": "linear"
+    },
+    {
+      "name": "09_out_right_stage",
+      "xyz": [
+        -0.1294,
+        -0.483,
+        0.65
+      ],
+      "rpy": [
+        105.0,
+        90.0,
+        0.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "09_out_right_leave",
+      "xyz": [
+        -0.1035,
+        -0.3864,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        75.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "10_down_rear_right_low_face",
+      "xyz": [
+        -0.3064,
+        -0.2571,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        40.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "10_down_rear_right_low_approach",
+      "xyz": [
+        -0.3447,
+        -0.2893,
+        0.18
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        40.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "10_down_rear_right_low",
+      "xyz": [
+        -0.3447,
+        -0.2893,
+        0.1
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        40.0
+      ],
+      "path": "linear",
+      "dwell": 0.3
+    },
+    {
+      "name": "10_down_rear_right_low_retract",
+      "xyz": [
+        -0.3447,
+        -0.2893,
+        0.18
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        40.0
+      ],
+      "path": "linear"
+    },
+    {
+      "name": "10_down_rear_right_low_leave",
+      "xyz": [
+        -0.3064,
+        -0.2571,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        40.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "return_swing1",
+      "xyz": [
+        -0.1035,
+        -0.3864,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        75.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "return_swing2",
+      "xyz": [
+        0.1368,
+        -0.3759,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        110.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "return_swing3",
+      "xyz": [
+        0.3277,
+        -0.2294,
+        0.55
+      ],
+      "rpy": [
+        180.0,
+        0.0,
+        145.0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "home",
+      "xyz": [
+        0.4,
+        0.0,
+        0.55
+      ],
+      "rpy": [
+        0,
+        180,
+        0
+      ],
+      "path": "smooth"
+    }
+  ]
+}

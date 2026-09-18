@@ -1,0 +1,125 @@
+{
+  "format": "cartesian",
+  "label": "Default pick and place (cartesian)",
+  "units": "deg",
+  "limits": {
+    "linear_speed": 0.15,
+    "smooth_speed": 0.5,
+    "angular_speed": 180
+  },
+  "waypoints": [
+    {
+      "name": "home",
+      "xyz": [
+        0.4,
+        0.0,
+        0.55
+      ],
+      "rpy": [
+        0,
+        180,
+        0
+      ]
+    },
+    {
+      "name": "above_pick",
+      "xyz": [
+        0.4,
+        0.3,
+        0.32
+      ],
+      "rpy": [
+        0,
+        180,
+        0
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "pick",
+      "xyz": [
+        0.4,
+        0.3,
+        0.2
+      ],
+      "rpy": [
+        0,
+        180,
+        0
+      ],
+      "path": "linear",
+      "dwell": 0.3
+    },
+    {
+      "name": "retract_pick",
+      "xyz": [
+        0.4,
+        0.3,
+        0.32
+      ],
+      "rpy": [
+        0,
+        180,
+        0
+      ],
+      "path": "linear"
+    },
+    {
+      "name": "above_place",
+      "xyz": [
+        0.4,
+        -0.3,
+        0.32
+      ],
+      "rpy": [
+        0,
+        180,
+        90
+      ],
+      "path": "smooth"
+    },
+    {
+      "name": "place",
+      "xyz": [
+        0.4,
+        -0.3,
+        0.2
+      ],
+      "rpy": [
+        0,
+        180,
+        90
+      ],
+      "path": "linear",
+      "dwell": 0.3
+    },
+    {
+      "name": "retract_place",
+      "xyz": [
+        0.4,
+        -0.3,
+        0.32
+      ],
+      "rpy": [
+        0,
+        180,
+        90
+      ],
+      "path": "linear"
+    },
+    {
+      "name": "home",
+      "xyz": [
+        0.4,
+        0.0,
+        0.55
+      ],
+      "rpy": [
+        0,
+        180,
+        0
+      ],
+      "path": "smooth"
+    }
+  ]
+}

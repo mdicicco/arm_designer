@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arm Analyzer</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <!-- ====== TOP BAR ====== -->
+    <header id="topbar">
+      <div class="brand">
+        <span class="brand-mark">◇</span>
+        <span class="brand-title">Arm Analyzer</span>
+        <span id="brand-doc" class="brand-doc">no robot</span>
+        <span id="brand-dirty" class="brand-dirty" hidden title="Edited since loaded — download to keep the changes">● modified</span>
+      </div>
+      <div class="top-actions">
+        <label class="top-field">
+          <span>Robot</span>
+          <select id="robot-select"></select>
+        </label>
+        <button type="button" id="btn-open-urdf" class="ghost-btn" title="Load a robot URDF from disk">Open…</button>
+        <button type="button" id="btn-download-urdf" class="ghost-btn" title="Download the edited URDF">Download</button>
+        <button type="button" id="btn-undo" class="ghost-btn" title="Undo edit (Ctrl+Z)" disabled>Undo</button>
+        <button type="button" id="btn-redo" class="ghost-btn" title="Redo edit (Ctrl+Shift+Z)" disabled>Redo</button>
+        <button type="button" id="btn-revert" class="ghost-btn" title="Discard all edits" disabled>Revert</button>
+        <span class="top-sep"></span>
+        <label class="top-field">
+          <span>Trajectory</span>
+          <select id="traj-select"></select>
+        </label>
+        <button type="button" id="btn-edit-traj" class="ghost-btn" title="Edit the cartesian trajectory (waypoints, paths, speeds)">Edit…</button>
+        <button type="button" id="btn-import-traj" class="ghost-btn" title="Import a trajectory (.json waypoints/samples or .csv samples)">Import…</button>
+        <span class="top-sep"></span>
+        <button type="button" id="btn-analyze" class="primary-btn" title="Re-run the analysis">Analyze</button>
+        <span id="status-msg" class="status-msg"></span>
+        <input type="file" id="file-urdf" accept=".urdf,.xml" hidden />
+        <input type="file" id="file-traj" accept=".json,.csv,.txt" hidden />
+      </div>
+    </header>
+
+    <div id="app">
+      <!-- ====== LEFT: URDF EDITOR ====== -->
+      <section id="editor-col" class="col">
+        <div class="col-head">
+          <h3 class="section-title">URDF editor</h3>
+          <span class="hint">zero pose · click a part to edit it</span>
+        </div>
+        <div id="editor-view" class="view" data-scene="editor">
+          <div class="view-host"></div>
+          <div class="overlay overlay-top-left">
+            <div class="tool-group">
+              <button type="button" class="tool-btn" data-view="iso">Iso</button>
+              <button type="button" class="tool-btn" data-view="front">Front</button>
+              <button type="button" class="tool-btn" data-view="right">Side</button>
+              <button type="button" class="tool-btn" data-view="top">Top</button>
+              <button type="button" class="tool-btn" data-fit>Fit</button>
+            </div>
+            <div class="tool-group">
+              <button type="button" class="tool-btn toggle" data-toggle="dims" data-on="1" title="Joint offsets from each parent link frame">Dims</button>
+              <button type="button" class="tool-btn toggle" data-toggle="com" data-on="1" title="Centres of mass, sized by mass">COM</button>
+              <button type="button" class="tool-btn toggle" data-toggle="frames" data-on="1" title="Link frames">Frames</button>
+              <button type="button" class="tool-btn toggle" data-toggle="axes" data-on="1" title="Joint axes">Axes</button>
+              <button type="button" class="tool-btn toggle" data-toggle="names" data-on="1" title="Link and joint names">Names</button>
+              <button type="button" class="tool-btn toggle" data-toggle="drives" data-on="1" title="Motors and gearboxes">Drives</button>
+              <button type="button" class="tool-btn toggle" data-toggle="xray" data-on="1" title="Translucent links">X-ray</button>
+              <button type="button" class="tool-btn toggle" data-toggle="grid" data-on="1">Grid</button>
+            </div>
+          </div>
+          <div class="overlay overlay-bottom-left legend">
+            <div class="legend-chip"><span class="sw sw-link"></span>Link</div>
+            <div class="legend-chip"><span class="sw sw-motor"></span>Motor</div>
+            <div class="legend-chip"><span class="sw sw-gearbox"></span>Gearbox</div>
+            <div class="legend-chip"><span class="sw sw-trans"></span>Transmission</div>
+          </div>
+        </div>
+        <div id="inspector" class="inspector"></div>
+      </section>
+
+      <!-- ====== MIDDLE: MOTION ====== -->
+      <section id="motion-col" class="col">
+        <div class="col-head">
+          <h3 class="section-title">Motion</h3>
+          <span class="hint" id="motion-hint"></span>
+        </div>
+        <div id="motion-view" class="view" data-scene="motion">
+          <div class="view-host"></div>
+          <div class="overlay overlay-top-left">
+            <div class="tool-group">
+              <button type="button" class="tool-btn" data-view="iso">Iso</button>
+              <button type="button" class="tool-btn" data-view="front">Front</button>
+              <button type="button" class="tool-btn" data-view="right">Side</button>
+              <button type="button" class="tool-btn" data-view="top">Top</button>
+              <button type="button" class="tool-btn" data-fit>Fit</button>
+            </div>
+            <div class="tool-group">
+              <button type="button" class="tool-btn toggle" data-toggle="path" data-on="1" title="Tool path">Path</button>
+              <button type="button" class="tool-btn toggle" data-toggle="drives" data-on="1" title="Motors and gearboxes">Drives</button>
+              <button type="button" class="tool-btn toggle" data-toggle="xray" data-on="1" title="Translucent links">X-ray</button>
+              <button type="button" class="tool-btn toggle" data-toggle="com" data-on="0" title="Centres of mass">COM</button>
+              <button type="button" class="tool-btn toggle" data-toggle="grid" data-on="1">Grid</button>
+              <button type="button" class="tool-btn toggle" id="btn-jog" data-on="0" title="Jog the joints by hand">Jog</button>
+            </div>
+          </div>
+          <div id="jog-panel" class="overlay overlay-top-right jog-panel" hidden></div>
+          <div class="overlay overlay-bottom">
+            <div id="transport" class="transport">
+              <button type="button" id="btn-play" class="tool-btn" title="Play / pause (Space)" disabled>▶</button>
+              <button type="button" id="btn-rewind" class="tool-btn" title="Back to start (Home)" disabled>⏮</button>
+              <input type="range" id="scrub" min="0" max="1" step="0.001" value="0" disabled />
+              <span id="time-readout" class="time-readout">— / — s</span>
+              <select id="play-speed" title="Playback speed">
+                <option value="0.25">0.25×</option>
+                <option value="0.5">0.5×</option>
+                <option value="1" selected>1×</option>
+                <option value="2">2×</option>
+              </select>
+              <button type="button" class="tool-btn toggle" id="btn-loop" data-on="1" title="Loop playback">Loop</button>
+            </div>
+          </div>
+        </div>
+        <section id="timeline-pane">
+          <div class="pane-head">
+            <h3 class="section-title">Torque vs time</h3>
+            <div class="seg" id="timeline-mode" role="radiogroup">
+              <button type="button" data-value="util" aria-pressed="true" title="Each joint's |torque| as a fraction of its peak torque envelope at the current speed">% of envelope</button>
+              <button type="button" data-value="torque" aria-pressed="false" title="Signed torque on the side selected at the right">Torque</button>
+            </div>
+            <div id="timeline-legend" class="series-legend"></div>
+          </div>
+          <canvas id="timeline-canvas" class="plot-canvas"></canvas>
+        </section>
+      </section>
+
+      <!-- ====== RIGHT: SPEED-TORQUE ====== -->
+      <section id="plots-col" class="col">
+        <div class="col-head">
+          <h3 class="section-title">Speed–torque</h3>
+        </div>
+        <div class="panel-head">
+          <div class="analysis-grid">
+            <label class="mini">
+              <span>Payload (kg)</span>
+              <input type="number" id="opt-payload" min="0" max="100" step="0.1" value="0" />
+            </label>
+            <label class="mini">
+              <span>Import units</span>
+              <select id="opt-units" title="Angle units for imported CSV / JSON files that don't declare their own">
+                <option value="rad">rad</option>
+                <option value="deg">deg</option>
+              </select>
+            </label>
+            <label class="mini">
+              <span>Smoothing</span>
+              <select id="opt-smoothing" title="Fit timed samples exactly, or with a cross-validated smoothing spline (use for measured data)">
+                <option value="none">exact fit</option>
+                <option value="auto">auto (GCV)</option>
+              </select>
+            </label>
+            <label class="mini">
+              <span>Rate (Hz)</span>
+              <input type="number" id="opt-rate" min="10" max="2000" step="10" value="200" />
+            </label>
+          </div>
+          <div class="plot-controls">
+            <div class="seg" id="plot-side" role="radiogroup">
+              <button type="button" data-value="joint" aria-pressed="true" title="Joint torque vs joint speed, against the drive envelope referred to the joint">Joint</button>
+              <button type="button" data-value="motor" aria-pressed="false" title="Motor torque vs motor speed, against the motor's peak / continuous curves">Motor</button>
+            </div>
+            <label class="check" title="Plot magnitudes in one quadrant instead of all four"><input type="checkbox" id="opt-fold" checked /> Fold |ω|, |τ|</label>
+            <label class="check" title="Frame the operating trace instead of the whole drive envelope"><input type="checkbox" id="opt-zoom" /> Zoom to data</label>
+          </div>
+        </div>
+        <div class="panel-scroll">
+          <div id="st-grid" class="st-grid"></div>
+          <h3 class="section-title">Drive summary</h3>
+          <div id="summary" class="summary">
+            <p class="hint">Load a trajectory to analyse the drives.</p>
+          </div>
+          <p class="hint key-hint">
+            <b>Solid</b> curve: peak envelope · <b>dashed</b>: continuous · ◆ RMS operating point ·
+            ● playhead. Utilization is max |τ| ÷ envelope at that speed; RMS is compared with the
+            continuous rating.
+          </p>
+        </div>
+      </section>
+    </div>
+
+    <!-- ====== TRAJECTORY EDITOR (modal) ====== -->
+    <div id="traj-modal" class="modal" hidden>
+      <div class="modal-card traj-editor" role="dialog" aria-label="Trajectory editor">
+        <header class="modal-head">
+          <h3>Trajectory editor</h3>
+          <input type="text" id="te-label" class="te-label" title="Trajectory name" />
+          <span class="hint">cartesian · <span id="te-duration">—</span></span>
+          <span class="grow"></span>
+          <span id="te-status" class="status-msg"></span>
+          <button type="button" id="te-undo" class="ghost-btn" title="Undo (Ctrl+Z)">Undo</button>
+          <button type="button" id="te-redo" class="ghost-btn" title="Redo (Ctrl+Shift+Z)">Redo</button>
+          <button type="button" id="te-download" class="ghost-btn" title="Download this trajectory as JSON">Download</button>
+          <button type="button" id="te-cancel" class="ghost-btn" title="Discard edits (Esc)">Cancel</button>
+          <button type="button" id="te-save" class="primary-btn" title="Solve IK along the whole path and analyse it">Save &amp; solve IK</button>
+        </header>
+        <div class="te-body">
+          <div id="te-view" class="view">
+            <div class="view-host"></div>
+            <div class="overlay overlay-top-left">
+              <div class="tool-group">
+                <button type="button" class="tool-btn" data-te-view="iso">Iso</button>
+                <button type="button" class="tool-btn" data-te-view="front">Front</button>
+                <button type="button" class="tool-btn" data-te-view="right">Side</button>
+                <button type="button" class="tool-btn" data-te-view="top">Top</button>
+                <button type="button" class="tool-btn" id="te-fit">Fit</button>
+              </div>
+              <div class="tool-group">
+                <span class="tool-group-label">Gizmo</span>
+                <button type="button" class="tool-btn toggle" data-te-mode="translate" data-on="1" title="Move the selected waypoint (W)">Move</button>
+                <button type="button" class="tool-btn toggle" data-te-mode="rotate" data-on="0" title="Rotate the selected waypoint (E)">Rotate</button>
+              </div>
+              <div class="tool-group">
+                <button type="button" class="tool-btn toggle" id="te-check" data-on="0">Check reach</button>
+              </div>
+            </div>
+            <div class="overlay overlay-bottom-left">
+              <p class="hint legend-chip">Robot-independent tool path in the robot base frame · click a waypoint to select it · axes show the tool frame (blue = approach) · <b>Check reach</b> marks waypoints the loaded robot can't reach in red</p>
+            </div>
+          </div>
+          <aside class="te-side">
+            <fieldset class="sec">
+              <legend>Trajectory</legend>
+              <label class="f" title="Tool tip the poses refer to, by name. Blank: each robot's first tool tip."><span>Tool</span><input type="text" id="te-tool" list="te-tool-list" placeholder="first tool tip" /><em></em></label>
+              <datalist id="te-tool-list"></datalist>
+              <label class="f" title="Peak tool speed on linear (approach / retract) segments"><span>Linear speed</span><input type="number" id="te-linear" min="1" step="10" /><em>mm/s</em></label>
+              <label class="f" title="Peak tool speed on smooth (curved) segments"><span>Smooth speed</span><input type="number" id="te-smooth" min="1" step="10" /><em>mm/s</em></label>
+              <label class="f" title="Peak tool rotation rate"><span>Rotation speed</span><input type="number" id="te-angular" min="1" step="10" /><em>°/s</em></label>
+            </fieldset>
+            <fieldset class="sec te-list-sec">
+              <legend>Waypoints</legend>
+              <div class="te-tools">
+                <button type="button" id="te-add" class="ghost-btn small" title="Add a waypoint after the selected one">+ Add</button>
+                <button type="button" id="te-dup" class="ghost-btn small" title="Duplicate the selected waypoint">Duplicate</button>
+                <button type="button" id="te-up" class="ghost-btn small" title="Move up">↑</button>
+                <button type="button" id="te-down" class="ghost-btn small" title="Move down">↓</button>
+                <button type="button" id="te-del" class="ghost-btn small danger" title="Delete the selected waypoint">Delete</button>
+                <button type="button" id="te-from-pose" class="ghost-btn small" title="Set the selected waypoint to the tool pose currently shown in the Motion view (use Jog to position it)">From motion pose</button>
+              </div>
+              <div id="te-list" class="te-list"></div>
+            </fieldset>
+            <fieldset class="sec">
+              <legend>Selected waypoint</legend>
+              <div id="te-detail"></div>
+            </fieldset>
+          </aside>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/static/main.js"></script>
+  </body>
+</html>
