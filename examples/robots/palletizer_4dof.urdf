@@ -24,20 +24,20 @@
     <!-- range -165..165 deg, 150 deg/s; effort is derived from the drive -->
     <limit lower="-2.87979" upper="2.87979" velocity="2.61799"/>
     <drive>
-      <motor name="j1_motor" link="base_link" rotor_inertia="1.6e-4"
+      <motor name="j1_motor" link="base_link" form="industrial" rotor_inertia="1.6e-4"
              peak_torque="6" continuous_torque="2.4"
              stall_torque="12" no_load_speed="314"
              torque_constant="0.45" resistance="0.6">
         <origin xyz="0.1 0 0.09" rpy="0 0 0"/>
-        <mass value="3.2"/>
-        <geometry><cylinder radius="0.05" length="0.16"/></geometry>
+        <mass value="2.03019"/>
+        <geometry><cylinder radius="0.0403983" length="0.129275"/></geometry>
       </motor>
       <gearbox name="j1_gearbox" link="base_link" ratio="100" efficiency="1.00"
                input_inertia="2.0e-5" peak_torque="600" rated_torque="250"
                max_input_speed="330">
         <origin xyz="0 0 0.2" rpy="0 0 0"/>
-        <mass value="4"/>
-        <geometry><cylinder radius="0.1" length="0.09"/></geometry>
+        <mass value="5.06502"/>
+        <geometry><cylinder radius="0.0834459" length="0.0751013"/></geometry>
       </gearbox>
       <!-- gear unit drives the column directly -->
       <transmission ratio="1" efficiency="1.00"/>
@@ -63,20 +63,20 @@
     <!-- range -25..85 deg, 110 deg/s; effort is derived from the drive -->
     <limit lower="-0.436332" upper="1.48353" velocity="1.91986"/>
     <drive>
-      <motor name="j2_motor" link="base_link" rotor_inertia="1.6e-4"
+      <motor name="j2_motor" link="base_link" form="industrial" rotor_inertia="1.6e-4"
              peak_torque="6" continuous_torque="2.4"
              stall_torque="12" no_load_speed="314"
              torque_constant="0.45" resistance="0.6">
         <origin xyz="-0.11 0.09 0.09" rpy="0 0 0"/>
-        <mass value="3.2"/>
-        <geometry><cylinder radius="0.05" length="0.16"/></geometry>
+        <mass value="2.03019"/>
+        <geometry><cylinder radius="0.0403983" length="0.129275"/></geometry>
       </motor>
       <gearbox name="j2_gearbox" link="base_link" ratio="100" efficiency="1.00"
                input_inertia="2.0e-5" peak_torque="600" rated_torque="250"
                max_input_speed="330">
         <origin xyz="-0.11 0.09 0.2" rpy="0 0 0"/>
-        <mass value="4"/>
-        <geometry><cylinder radius="0.1" length="0.09"/></geometry>
+        <mass value="5.06502"/>
+        <geometry><cylinder radius="0.0834459" length="0.0751013"/></geometry>
       </gearbox>
       <!-- push rod from the base up to the shoulder rocker -->
       <transmission ratio="1" efficiency="1.00"/>
@@ -102,20 +102,20 @@
     <!-- range -20..140 deg, 130 deg/s; effort is derived from the drive -->
     <limit lower="-0.349066" upper="2.44346" velocity="2.26893"/>
     <drive>
-      <motor name="j3_motor" link="base_link" rotor_inertia="1.6e-4"
+      <motor name="j3_motor" link="base_link" form="industrial" rotor_inertia="1.6e-4"
              peak_torque="6" continuous_torque="2.4"
              stall_torque="12" no_load_speed="314"
              torque_constant="0.45" resistance="0.6">
         <origin xyz="-0.11 -0.09 0.09" rpy="0 0 0"/>
-        <mass value="3.2"/>
-        <geometry><cylinder radius="0.05" length="0.16"/></geometry>
+        <mass value="2.03019"/>
+        <geometry><cylinder radius="0.0403983" length="0.129275"/></geometry>
       </motor>
       <gearbox name="j3_gearbox" link="base_link" ratio="100" efficiency="1.00"
                input_inertia="2.0e-5" peak_torque="600" rated_torque="250"
                max_input_speed="330">
         <origin xyz="-0.11 -0.09 0.2" rpy="0 0 0"/>
-        <mass value="4"/>
-        <geometry><cylinder radius="0.1" length="0.09"/></geometry>
+        <mass value="5.06502"/>
+        <geometry><cylinder radius="0.0834459" length="0.0751013"/></geometry>
       </gearbox>
       <!-- push rod from the base, alongside the upper arm, to the elbow -->
       <transmission ratio="1" efficiency="1.00"/>
@@ -183,20 +183,20 @@
     <!-- range -300..300 deg, 300 deg/s; effort is derived from the drive -->
     <limit lower="-5.23599" upper="5.23599" velocity="5.23599"/>
     <drive>
-      <motor name="j4_motor" link="link3" rotor_inertia="2.0e-5"
+      <motor name="j4_motor" link="link3" form="industrial" rotor_inertia="2.0e-5"
              peak_torque="1.3" continuous_torque="0.45"
              stall_torque="2.6" no_load_speed="314"
              torque_constant="0.3" resistance="2">
         <origin xyz="0.1 0 0.09" rpy="0 0 0"/>
-        <mass value="1.2"/>
-        <geometry><cylinder radius="0.032" length="0.11"/></geometry>
+        <mass value="0.699138"/>
+        <geometry><cylinder radius="0.0276487" length="0.0950424"/></geometry>
       </motor>
       <gearbox name="j4_gearbox" link="link5" ratio="50" efficiency="1.00"
                input_inertia="4.0e-6" peak_torque="100" rated_torque="40"
                max_input_speed="330">
         <origin xyz="0 0 -0.06" rpy="0 0 0"/>
-        <mass value="0.8"/>
-        <geometry><cylinder radius="0.05" length="0.05"/></geometry>
+        <mass value="1.4343"/>
+        <geometry><cylinder radius="0.052906" length="0.052906"/></geometry>
       </gearbox>
       <!-- belt down the forearm to the tool-rotate gear unit on the plate -->
       <transmission ratio="1" efficiency="1.00"/>

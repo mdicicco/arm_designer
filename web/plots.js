@@ -10,7 +10,7 @@ import { SERIES_COLORS, fmt, fmtPct, toRpm, utilClass } from "./format.js";
 
 const $ = (sel) => document.querySelector(sel);
 
-const PAD = { l: 44, r: 8, t: 8, b: 22 };
+export const PAD = { l: 44, r: 8, t: 8, b: 22 };
 const AXIS_TEXT = "#7a8494";
 const FONT = "10px system-ui, sans-serif";
 
@@ -18,7 +18,7 @@ const FONT = "10px system-ui, sans-serif";
 // Canvas plumbing
 // ---------------------------------------------------------------------------
 
-class LayeredCanvas {
+export class LayeredCanvas {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
@@ -63,7 +63,7 @@ class LayeredCanvas {
   }
 }
 
-function frame(c, w, h) {
+export function frame(c, w, h) {
   const plotW = w - PAD.l - PAD.r;
   const plotH = h - PAD.t - PAD.b;
   c.fillStyle = "rgba(255,255,255,0.025)";
@@ -74,7 +74,7 @@ function frame(c, w, h) {
   return { plotW, plotH };
 }
 
-function emptyMessage(c, w, h, text) {
+export function emptyMessage(c, w, h, text) {
   const { plotW, plotH } = frame(c, w, h);
   c.fillStyle = AXIS_TEXT;
   c.font = "12px system-ui, sans-serif";
@@ -83,7 +83,7 @@ function emptyMessage(c, w, h, text) {
   c.fillText(text, PAD.l + plotW / 2, PAD.t + plotH / 2);
 }
 
-function niceMax(v) {
+export function niceMax(v) {
   if (!(v > 0)) return 1;
   const p = 10 ** Math.floor(Math.log10(v));
   for (const m of [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (m * p >= v) return m * p;
@@ -99,7 +99,7 @@ function tickLabel(v) {
   return v.toPrecision(2);
 }
 
-function axes(c, w, h, x, y, xLabel, yLabel) {
+export function axes(c, w, h, x, y, xLabel, yLabel) {
   const { plotW, plotH } = frame(c, w, h);
   c.font = FONT;
   c.fillStyle = AXIS_TEXT;
@@ -144,7 +144,7 @@ function axes(c, w, h, x, y, xLabel, yLabel) {
   return { plotW, plotH };
 }
 
-function scale(min, max, p0, p1) {
+export function scale(min, max, p0, p1) {
   const span = max - min || 1;
   return { min, max, of: (v) => p0 + ((v - min) / span) * (p1 - p0) };
 }
@@ -589,6 +589,65 @@ function utd(v) {
   return td(fmtPct(v), utilClass(v));
 }
 
+/** Motor mass in the totals row, naming which number the analysis used. */
+function motorMassTotal(result) {
+  const mm = result.motor_mass;
+  if (!mm) return "";
+  const other =
+    mm.mode === "model"
+      ? `declared ${fmt(mm.declared_total, 2)}`
+      : `model says ${fmt(mm.estimated_total, 2)}`;
+  return `<span title="Motors only; gearboxes are not covered by the fit">Motors
+    <b>${fmt(mm.applied_total, 2)} kg</b> <span class="u-na">(${other} kg)</span></span>`;
+}
+
+/** Gearbox mass in the totals row, alongside the motors. */
+function gearboxMassTotal(result) {
+  const gm = result.gearbox_mass;
+  if (!gm) return "";
+  const other =
+    gm.mode === "model"
+      ? `declared ${fmt(gm.declared_total, 2)}`
+      : `model says ${fmt(gm.estimated_total, 2)}`;
+  return `<span title="Reducers only; the motors driving them are counted separately">Gearboxes
+    <b>${fmt(gm.applied_total, 2)} kg</b> <span class="u-na">(${other} kg)</span></span>`;
+}
+
+/** The caveat line: what the model is, and where it is extrapolating. */
+function motorMassNote(result) {
+  const gm = gearboxMassNote(result);
+  const mm = result.motor_mass;
+  if (!mm || mm.mode !== "model") return gm;
+  const flagged = Object.entries(mm.joints)
+    .filter(([, r]) => r.note)
+    .map(([joint, r]) => `${joint} (${r.note})`);
+  const b = Number(mm.exponents?.torque ?? 0).toFixed(2);
+  return `<p class="hint">
+    Motor masses are predicted from each motor's <b>peak_torque</b> and its construction
+    (mass ∝ τ<sup>${b}</sup> with a per-form offset, fitted to ${mm.source}) and the
+    dynamics re-run on them. Typical error is <b>${Math.round((mm.loo_median_rel ?? 0.3) * 100)}%</b>
+    per motor, so this ranks layouts rather than specifies parts.
+    ${flagged.length ? `<br /><b class="u-marginal">Extrapolating:</b> ${flagged.join(", ")}.` : ""}
+  </p>${gm}`;
+}
+
+/** The same caveat for the reducers, whose law is typed and much tighter. */
+function gearboxMassNote(result) {
+  const gm = result.gearbox_mass;
+  if (!gm || gm.mode !== "model") return "";
+  const flagged = Object.entries(gm.joints)
+    .filter(([, r]) => r.note)
+    .map(([joint, r]) => `${joint} (${r.note})`);
+  const b = Number(gm.exponents?.torque ?? 0).toFixed(2);
+  return `<p class="hint">
+    Gearbox masses are predicted from each reducer's <b>rated_torque</b> and type
+    (mass ∝ T<sub>out</sub><sup>${b}</sup>, fitted to ${gm.source}) and the dynamics re-run on them.
+    Ratio is almost irrelevant — frame size sets the mass. Typical error is
+    <b>±${fmt(gm.loo_mae_kg, 2)} kg</b> per reducer.
+    ${flagged.length ? `<br /><b class="u-marginal">Extrapolating:</b> ${flagged.join(", ")}.` : ""}
+  </p>`;
+}
+
 export function renderSummary(result, { selected, onSelect }) {
   const host = $("#summary");
   if (!result) {
@@ -662,7 +721,11 @@ export function renderSummary(result, { selected, onSelect }) {
       <span>Motor energy out <b>${fmt(energyOut, 0)} J</b></span>
       <span>Mean copper loss <b>${fmt(meanCopper, 1)} W</b></span>
       ${result.payload_mass > 0 ? `<span>Payload <b>${fmt(result.payload_mass, 2)} kg</b></span>` : ""}
-    </div>`;
+      <span>Arm mass <b>${fmt(result.mass_budget?.total, 2)} kg</b></span>
+      ${motorMassTotal(result)}
+      ${gearboxMassTotal(result)}
+    </div>
+    ${motorMassNote(result)}`;
   host.querySelectorAll("tbody tr").forEach((tr) => {
     tr.addEventListener("click", () => onSelect(tr.dataset.joint));
   });

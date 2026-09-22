@@ -35,6 +35,10 @@ from urdf_parts import ALONG_Y, drive_xml, g, joint_xml, link_xml
 
 OUT = Path(__file__).resolve().parents[1] / "examples" / "robots" / "ur_style_6dof.urdf"
 
+# Construction of the real robot's motors, which sets their mass (see
+# arm_analyzer.motor_mass -- form moves it more than the rating does).
+MOTOR_FORM = "integrated"
+
 GEARBOX_EFFICIENCY = 1.0
 TRANSMISSION_EFFICIENCY = 1.0
 
@@ -66,9 +70,9 @@ COLORS = {"base_link": "0.30 0.33 0.38 1"}
 
 # (mass, radius, length, rotor inertia, peak, continuous, stall, no-load rad/s, kt, R)
 # Frameless servo rotors inside each joint module.
-MOTOR_JOINT_BIG = (1.15, 0.038, 0.075, "4.5e-5", 1.6, 0.58, 3.2, 480, 0.24, 1.1)
-MOTOR_JOINT_MID = (0.80, 0.032, 0.065, "2.2e-5", 1.4, 0.58, 2.8, 480, 0.22, 1.6)
-MOTOR_JOINT_SML = (0.45, 0.026, 0.050, "7.0e-6", 0.58, 0.21, 1.2, 620, 0.16, 3.2)
+MOTOR_JOINT_BIG = (0.038, 0.075, "4.5e-5", 1.6, 0.58, 3.2, 480, 0.24, 1.1)
+MOTOR_JOINT_MID = (0.032, 0.065, "2.2e-5", 1.4, 0.58, 2.8, 480, 0.22, 1.6)
+MOTOR_JOINT_SML = (0.026, 0.050, "7.0e-6", 0.58, 0.21, 1.2, 620, 0.16, 3.2)
 
 # name, parent, child, origin, axis, lower, upper (deg), velocity (deg/s)
 JOINTS = [
@@ -85,32 +89,32 @@ JOINTS = [
 DRIVES = {
     "j1": (
         (MOTOR_JOINT_BIG, "base_link", (0, 0, 0.055), "z"),
-        ("link1", (0, 0, 0.0), "z", 101, "8.0e-6", 210, 150, 500, 1.1, 0.055, 0.035),
+        ("link1", (0, 0, 0.0), "z", 101, "8.0e-6", 210, 150, 500, 0.055, 0.035),
         "harmonic gear unit inside the shoulder module",
     ),
     "j2": (
         (MOTOR_JOINT_BIG, "link1", (0, 0.085, 0), "y"),
-        ("link2", (0, 0.02, 0.0), "y", 101, "8.0e-6", 210, 150, 500, 1.1, 0.055, 0.035),
+        ("link2", (0, 0.02, 0.0), "y", 101, "8.0e-6", 210, 150, 500, 0.055, 0.035),
         "harmonic gear unit inside the shoulder-lift module",
     ),
     "j3": (
         (MOTOR_JOINT_MID, "link2", (0, -0.025, A2 - 0.02), "y"),
-        ("link3", (0, 0, 0.02), "y", 101, "5.0e-6", 210, 150, 500, 0.8, 0.048, 0.03),
+        ("link3", (0, 0, 0.02), "y", 101, "5.0e-6", 210, 150, 500, 0.048, 0.03),
         "harmonic gear unit inside the elbow module",
     ),
     "j4": (
         (MOTOR_JOINT_SML, "link3", (0, 0.03, A3 - 0.03), "y"),
-        ("link4", (0, 0.02, 0), "y", 50, "1.5e-6", 40, 28, 650, 0.45, 0.04, 0.025),
+        ("link4", (0, 0.02, 0), "y", 50, "1.5e-6", 40, 28, 650, 0.04, 0.025),
         "harmonic gear unit inside the wrist-1 module",
     ),
     "j5": (
         (MOTOR_JOINT_SML, "link4", (0, D4 - 0.03, 0.03), "z"),
-        ("link5", (0, 0, 0.02), "z", 50, "1.5e-6", 40, 28, 650, 0.45, 0.04, 0.025),
+        ("link5", (0, 0, 0.02), "z", 50, "1.5e-6", 40, 28, 650, 0.04, 0.025),
         "harmonic gear unit inside the wrist-2 module",
     ),
     "j6": (
         (MOTOR_JOINT_SML, "link5", (0, 0.03, D5 - 0.03), "y"),
-        ("link6", (0, 0.01, 0), "y", 50, "1.5e-6", 40, 28, 650, 0.35, 0.035, 0.02),
+        ("link6", (0, 0.01, 0), "y", 50, "1.5e-6", 40, 28, 650, 0.035, 0.02),
         "harmonic gear unit inside the wrist-3 module",
     ),
 }
@@ -150,6 +154,7 @@ def main() -> None:
             comment,
             gearbox_name="gear_unit",
             gearbox_efficiency=GEARBOX_EFFICIENCY,
+            motor_form=MOTOR_FORM,
             transmission_efficiency=TRANSMISSION_EFFICIENCY,
         )
         parts.append(joint_xml(name, parent, child, origin, axis, lo, hi, vel, body=body))

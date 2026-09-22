@@ -37,6 +37,10 @@ from urdf_parts import DOWN, drive_xml, g, joint_xml, link_xml, mimic_xml
 
 OUT = Path(__file__).resolve().parents[1] / "examples" / "robots" / "palletizer_4dof.urdf"
 
+# Construction of the real robot's motors, which sets their mass (see
+# arm_analyzer.motor_mass -- form moves it more than the rating does).
+MOTOR_FORM = "industrial"
+
 GEARBOX_EFFICIENCY = 1.0
 TRANSMISSION_EFFICIENCY = 1.0
 
@@ -66,8 +70,8 @@ LINKS = {
 COLORS = {"base_link": "0.30 0.33 0.38 1"}
 
 # (mass, radius, length, rotor inertia, peak, continuous, stall, no-load rad/s, kt, R)
-MOTOR_700W = (3.2, 0.050, 0.16, "1.6e-4", 6.0, 2.40, 12.0, 314, 0.45, 0.6)
-MOTOR_400W = (1.2, 0.032, 0.11, "2.0e-5", 1.3, 0.45, 2.6, 314, 0.30, 2.0)
+MOTOR_700W = (0.050, 0.16, "1.6e-4", 6.0, 2.40, 12.0, 314, 0.45, 0.6)
+MOTOR_400W = (0.032, 0.11, "2.0e-5", 1.3, 0.45, 2.6, 314, 0.30, 2.0)
 
 # name, parent, child, origin, axis, lower, upper (deg), velocity (deg/s)
 JOINTS = [
@@ -86,22 +90,22 @@ MIMICS = {"level_elbow": ("j3", -1.0), "level_shoulder": ("j2", -1.0)}
 DRIVES = {
     "j1": (
         (MOTOR_700W, "base_link", (0.10, 0, 0.09), "z"),
-        ("base_link", (0, 0, 0.20), "z", 100, "2.0e-5", 600, 250, 330, 4.0, 0.10, 0.09),
+        ("base_link", (0, 0, 0.20), "z", 100, "2.0e-5", 600, 250, 330, 0.10, 0.09),
         "gear unit drives the column directly",
     ),
     "j2": (
         (MOTOR_700W, "base_link", (-0.11, 0.09, 0.09), "z"),
-        ("base_link", (-0.11, 0.09, 0.20), "z", 100, "2.0e-5", 600, 250, 330, 4.0, 0.10, 0.09),
+        ("base_link", (-0.11, 0.09, 0.20), "z", 100, "2.0e-5", 600, 250, 330, 0.10, 0.09),
         "push rod from the base up to the shoulder rocker",
     ),
     "j3": (
         (MOTOR_700W, "base_link", (-0.11, -0.09, 0.09), "z"),
-        ("base_link", (-0.11, -0.09, 0.20), "z", 100, "2.0e-5", 600, 250, 330, 4.0, 0.10, 0.09),
+        ("base_link", (-0.11, -0.09, 0.20), "z", 100, "2.0e-5", 600, 250, 330, 0.10, 0.09),
         "push rod from the base, alongside the upper arm, to the elbow",
     ),
     "j4": (
         (MOTOR_400W, "link3", (0.10, 0, 0.09), "z"),
-        ("link5", (0, 0, -0.06), "z", 50, "4.0e-6", 100, 40, 330, 0.8, 0.05, 0.05),
+        ("link5", (0, 0, -0.06), "z", 50, "4.0e-6", 100, 40, 330, 0.05, 0.05),
         "belt down the forearm to the tool-rotate gear unit on the plate",
     ),
 }
@@ -144,6 +148,7 @@ def main() -> None:
                 gearbox,
                 comment,
                 gearbox_efficiency=GEARBOX_EFFICIENCY,
+                motor_form=MOTOR_FORM,
                 transmission_efficiency=TRANSMISSION_EFFICIENCY,
             )
         parts.append(joint_xml(name, parent, child, origin, axis, lo, hi, vel, body=body))

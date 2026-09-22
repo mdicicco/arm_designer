@@ -817,6 +817,58 @@ button:disabled {
   gap: 8px 12px;
   margin-top: 8px;
 }
+.opt-group {
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-3);
+}
+.opt-group > summary {
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.opt-group > summary .hint {
+  font-weight: 400;
+  font-size: 10px;
+  margin: 0;
+}
+.lm-body {
+  padding: 4px 8px 8px;
+  border-top: 1px solid var(--line);
+}
+.lm-sliders {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 2px 12px;
+  margin-top: 6px;
+}
+/* label | slider | readout, so the numbers line up down the column */
+.lm-f {
+  display: grid;
+  grid-template-columns: 96px 1fr 58px;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--muted-2);
+}
+.lm-f input[type="range"] {
+  width: 100%;
+}
+.lm-f .val {
+  text-align: right;
+  font-size: 11px;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+.lm-body .hint {
+  margin-top: 6px;
+}
 .st-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
@@ -861,6 +913,68 @@ button:disabled {
   height: 160px;
   margin-top: 2px;
 }
+.cm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+.cm-cell {
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 4px 6px 6px;
+  min-width: 0;
+}
+.cm-cell canvas {
+  display: block;
+  width: 100%;
+  height: 220px;
+  margin-top: 2px;
+}
+.cm-split {
+  overflow-x: auto;
+  margin-top: 4px;
+}
+.cm-split table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.cm-split th,
+.cm-split td {
+  padding: 2px 4px;
+  text-align: right;
+  white-space: nowrap;
+}
+.cm-split th {
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--line-2);
+}
+.cm-split td:first-child,
+.cm-split th:first-child {
+  text-align: left;
+}
+/* The share expression is the point of the table; give it room and don't
+   let the numeric columns squeeze it. */
+.cm-split .share {
+  text-align: left;
+  color: var(--muted);
+  font-size: 10px;
+}
+.cm-split .swatch {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  vertical-align: middle;
+  margin-right: 3px;
+}
+
 .summary {
   overflow-x: auto;
 }

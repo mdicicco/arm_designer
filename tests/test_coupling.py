@@ -316,3 +316,97 @@ def test_analysis_runs_with_a_passive_linkage():
     assert all(s["drive"] is not None for s in result["summary"])
     # The plate's mass is carried by both joints even though it has no drive.
     assert result["moving_mass"] > 3.0
+
+
+# ---------------------------------------------------------------------------
+# The joint -> motor map (analysis "couplings")
+# ---------------------------------------------------------------------------
+
+
+def _map_of(arm, q=(0.3, -0.2), qd=(0.4, 0.1), qdd=(1.0, -1.0)):
+    result = analyze(arm, _plan(arm, list(q), list(qd), list(qdd)), rate_hz=100)
+    return result, result["couplings"]
+
+
+def test_plain_drives_report_no_coupling_map(plain):
+    _, maps = _map_of(plain)
+    assert maps == []
+
+
+def test_coupling_map_reports_each_motor_share(diff_arm):
+    _, maps = _map_of(diff_arm)
+    assert len(maps) == 1
+    m = maps[0]
+    assert m["name"] == "shoulder" and m["type"] == "differential"
+    assert m["joints"] == ["j1", "j2"] and m["plane"] is True
+    assert [x["joint"] for x in m["motors"]] == ["j1", "j2"]
+    # Half the sum in one motor, half the difference in the other, over N.
+    half = 1.0 / (2 * RATIO)
+    assert np.allclose(m["motors"][0]["share"], [half, half])
+    assert np.allclose(m["motors"][1]["share"], [half, -half])
+
+
+def test_motor_torque_is_its_share_of_both_joints_plus_its_own_rotor(diff_arm):
+    result, maps = _map_of(diff_arm)
+    m = maps[0]
+    for motor in m["motors"]:
+        s = motor["sizing"]
+        parts = sum(s["from_joints"][n] for n in m["joints"]) + s["from_inertia"]
+        assert parts == pytest.approx(s["motor_torque"], rel=1e-6, abs=1e-12)
+        # And the split agrees with the series the motor plot is drawn from.
+        i = s["index"]
+        assert result["series"][motor["joint"]]["motor_torque"][i] == pytest.approx(
+            s["motor_torque"], rel=1e-5
+        )
+
+
+def test_each_joint_contribution_is_share_times_joint_torque(diff_arm):
+    _, maps = _map_of(diff_arm)
+    m = maps[0]
+    for motor in m["motors"]:
+        s = motor["sizing"]
+        for k, n in enumerate(m["joints"]):
+            assert s["from_joints"][n] == pytest.approx(
+                motor["share"][k] * s["joint_torque"][n], rel=1e-5
+            )
+
+
+def test_sizing_sample_is_the_worst_utilization_not_the_biggest_torque(diff_arm):
+    """A rated motor is sized by |tau| / limit(speed), which derates with speed."""
+    result, maps = _map_of(diff_arm, qd=(3.0, -2.0))
+    for motor in maps[0]["motors"]:
+        series = result["series"][motor["joint"]]
+        util = series["util_motor"]
+        i = motor["sizing"]["index"]
+        assert util[i] == pytest.approx(max(u for u in util if u is not None), rel=1e-9)
+        # rel is loose because the series is rounded for the browser.
+        assert motor["peak_util"] == pytest.approx(util[i], rel=1e-5)
+
+
+def test_region_corners_are_the_motor_ratings_mapped_back_to_the_joints(diff_arm):
+    """``|A^-1[:, j] . tau| <= T_j`` has corners at ``A^T s`` — the check the
+    browser's diamond is drawn from."""
+    _, maps = _map_of(diff_arm)
+    m = maps[0]
+    A = np.array(m["A"])
+    A_inv = np.array(m["A_inv"])
+    limits = np.array([x["stall_limit"] for x in m["motors"]])
+    # At zero speed the peak_torque rating caps the stall line (1.0 < 2.0).
+    assert np.allclose(limits, 1.0)
+    for signs in ((1, 1), (1, -1), (-1, -1), (-1, 1)):
+        tau = A.T @ (np.array(signs) * limits)
+        # Both constraints tight at a corner.
+        assert np.allclose(np.abs(tau @ A_inv), limits)
+    # The diamond is not the box: torques inside both joint ratings can still
+    # exceed a motor. Each joint alone can take 2N (both motors pushing), but
+    # the two together cannot.
+    both = np.array([2 * RATIO * 1.0, 2 * RATIO * 1.0]) * 0.75
+    assert np.max(np.abs(both @ A_inv)) > limits.max()
+
+
+def test_joint_torque_trace_is_sent_for_the_plane(diff_arm):
+    result, maps = _map_of(diff_arm)
+    m = maps[0]
+    n = len(result["t"])
+    for name in m["joints"]:
+        assert len(m["joint_torque"][name]) == n

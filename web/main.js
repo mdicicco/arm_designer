@@ -8,6 +8,8 @@
 //   jog.js         joint jog pop-over in the motion view
 //   traj_editor.js cartesian trajectory editor (pop-out)
 //   plots.js       speed-torque grid, torque timeline, summary table
+//   coupling.js    joint-to-motor map for differentials (torque plane + split)
+//   link_mass.js   link-sizing sliders (tube + collar per actuator)
 //   format.js      number formatting + series palette
 //
 // Data flow: the URDF lives here as a UrdfDoc. Every edit re-serializes it and
@@ -24,6 +26,8 @@ import { JogPanel } from "./jog.js";
 import { TrajectoryEditor } from "./traj_editor.js";
 import * as THREE from "three";
 import { SpeedTorquePlots, Timeline, renderSummary } from "./plots.js";
+import { CouplingPlots } from "./coupling.js";
+import { LinkMassControls } from "./link_mass.js";
 import { fmt } from "./format.js";
 
 const $ = (sel) => document.querySelector(sel);
@@ -98,6 +102,8 @@ const inspector = new Inspector($("#inspector"), {
 });
 const jog = new JogPanel($("#jog-panel"), { onJog: (name, v) => jogJoint(name, v) });
 const plots = new SpeedTorquePlots({ onSelect: (joint) => select({ kind: "transmission", id: joint }) });
+const couplings = new CouplingPlots();
+const linkMass = new LinkMassControls({ onChange: () => analyzeSoon() });
 const trajEditor = new TrajectoryEditor({
   getUrdf: () => state.urdf,
   getModel: () => state.model,
@@ -294,6 +300,8 @@ function clearResult() {
   state.t = 0;
   state.playing = false;
   plots.setResult(null);
+  couplings.setResult(null);
+  linkMass.setResult(null);
   timeline.setResult(null);
   renderSummary(null, {});
   motionView.setToolPath(null);
@@ -317,6 +325,9 @@ async function analyze() {
       smoothing: $("#opt-smoothing").value,
       rate_hz: Number($("#opt-rate").value) || 200,
       payload: { mass: Math.max(0, Number($("#opt-payload").value) || 0) },
+      motor_mass: $("#opt-motor-mass").value,
+      gearbox_mass: $("#opt-gearbox-mass").value,
+      link_mass: linkMass.request(),
     });
   } catch (e) {
     if (seq !== state.analyzeSeq) return null;
@@ -330,6 +341,8 @@ async function analyze() {
   state.plan = new PlanEvaluator(result.plan);
   state.t = Math.min(state.t, result.duration);
   plots.setResult(result);
+  couplings.setResult(result);
+  linkMass.setResult(result);
   timeline.setResult(result);
   renderSummary(result, {
     selected: jointOf(state.selection),
@@ -542,6 +555,7 @@ function frame(now) {
   drawPending = false;
   const has = !!state.result;
   plots.draw(has ? sampleIndex(state.t) : null);
+  couplings.draw(has ? sampleIndex(state.t) : null);
   timeline.draw(has ? state.t : null);
   $("#scrub").value = String(state.t);
   $("#time-readout").textContent = has ? `${fmt(state.t, 2)} / ${fmt(state.result.duration, 2)} s` : "— / — s";
@@ -658,7 +672,8 @@ function wireUi() {
 
   $("#btn-analyze").addEventListener("click", analyze);
   for (const id of ["#opt-payload", "#opt-rate"]) $(id).addEventListener("input", analyzeSoon);
-  for (const id of ["#opt-units", "#opt-smoothing"]) $(id).addEventListener("change", analyze);
+  for (const id of ["#opt-units", "#opt-smoothing", "#opt-motor-mass", "#opt-gearbox-mass"])
+    $(id).addEventListener("change", analyze);
 
   segmented("#plot-side", (side) => {
     plots.setOptions({ side });
@@ -671,6 +686,7 @@ function wireUi() {
   });
   $("#opt-zoom").addEventListener("change", (e) => {
     plots.setOptions({ zoom: e.target.checked });
+    couplings.setOptions({ zoom: e.target.checked });
     requestDraw();
   });
   segmented("#timeline-mode", (mode) => {

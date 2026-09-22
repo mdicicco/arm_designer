@@ -73,6 +73,7 @@ GUI can show them next to the chain.
 
 from __future__ import annotations
 
+import copy
 import math
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
@@ -81,6 +82,7 @@ from typing import Any, Optional
 
 import numpy as np
 
+from arm_analyzer import gearbox_mass, motor_mass
 from arm_analyzer.mass_properties import (
     MassProperties,
     sphere_radius_for_mass,
@@ -271,6 +273,10 @@ class MotorSpec:
     no_load_speed: Optional[float] = None
     torque_constant: Optional[float] = None
     resistance: Optional[float] = None
+    # Construction, for the mass law in ``arm_analyzer.motor_mass``: at the
+    # same rating an integrated servo is ~3.8x an outrunner. Untyped means
+    # frameless, the usual choice for a robot joint.
+    form: str = motor_mass.DEFAULT_FORM
 
     def torque_limit(self, speed: np.ndarray | float, continuous: bool = False) -> np.ndarray:
         """Available motor torque at ``|speed|`` (rad/s).
@@ -300,6 +306,10 @@ class GearboxSpec:
     peak_torque: Optional[float] = None  # output side
     rated_torque: Optional[float] = None  # output side, continuous
     max_input_speed: Optional[float] = None
+    # Construction, for the mass law in ``arm_analyzer.gearbox_mass``: a worm
+    # box weighs about twice a planetary at the same rating. Untyped means
+    # harmonic, the usual choice on an arm of this class.
+    kind: str = gearbox_mass.DEFAULT_TYPE
 
 
 @dataclass
@@ -395,6 +405,7 @@ class Drive:
             "joint": self.joint,
             "motor": {
                 **lump(self.motor),
+                "form": m.form,
                 "rotor_inertia": m.rotor_inertia,
                 "peak_torque": m.peak_torque,
                 "continuous_torque": m.continuous_torque,
@@ -406,6 +417,7 @@ class Drive:
             },
             "gearbox": {
                 **lump(self.gearbox),
+                "kind": g.kind,
                 "ratio": g.ratio,
                 "efficiency": g.efficiency,
                 "input_inertia": g.input_inertia,
@@ -616,6 +628,135 @@ class ArmDescription:
             "gearboxes": gearboxes,
             "total": structure + motors + gearboxes,
         }
+
+    def motor_mass_estimates(self) -> dict[str, dict[str, Any]]:
+        """What each motor would weigh for the torque it is rated for.
+
+        Per joint: the mass declared in the URDF, the mass the empirical BLDC
+        power law predicts from ``peak_torque`` and the motor's form, and their
+        ratio. ``estimated`` is None where the motor declares no peak
+        torque -- there is nothing to predict from -- and ``note`` says when
+        the rating falls outside the data the law was fitted to.
+
+        This only reports; :meth:`with_estimated_motor_masses` is what changes
+        the arm.
+        """
+        out: dict[str, dict[str, Any]] = {}
+        for name, d in self.drives.items():
+            tau = d.motor_spec.peak_torque
+            form = d.motor_spec.form
+            row: dict[str, Any] = {
+                "declared": d.motor.mass,
+                "peak_torque": tau,
+                "form": form,
+                "estimated": None,
+                "ratio": None,
+                "note": None if tau else "motor declares no peak_torque",
+            }
+            if tau:
+                row["estimated"] = motor_mass.estimate_mass(tau, form)
+                row["note"] = motor_mass.out_of_range(tau, form)
+                if d.motor.mass > 0:
+                    row["ratio"] = row["estimated"] / d.motor.mass
+            out[name] = row
+        return out
+
+    def gearbox_mass_estimates(self) -> dict[str, dict[str, Any]]:
+        """What each gearbox would weigh for the torque it is rated for.
+
+        Per joint: the mass declared in the URDF, the mass the empirical
+        reducer law predicts from ``rated_torque``, ``ratio`` and the
+        gearbox's type, and their ratio. ``estimated`` is None where the
+        gearbox declares no rated output torque, and ``note`` says when the
+        rating falls outside the data the law was fitted to.
+        """
+        out: dict[str, dict[str, Any]] = {}
+        for name, d in self.drives.items():
+            gs = d.gearbox_spec
+            tau, ratio = gs.rated_torque, gs.ratio
+            row: dict[str, Any] = {
+                "declared": d.gearbox.mass,
+                "rated_torque": tau,
+                "ratio": ratio,
+                "kind": gs.kind,
+                "estimated": None,
+                "mass_ratio": None,
+                "note": None if tau else "gearbox declares no rated_torque",
+            }
+            if tau:
+                row["estimated"] = gearbox_mass.estimate_mass(tau, ratio, gs.kind)
+                row["note"] = gearbox_mass.out_of_range(tau, ratio, gs.kind)
+                if d.gearbox.mass > 0:
+                    row["mass_ratio"] = row["estimated"] / d.gearbox.mass
+            out[name] = row
+        return out
+
+    def with_estimated_gearbox_masses(self) -> "ArmDescription":
+        """A copy whose gearbox lumps weigh what their rating implies.
+
+        Only the gearbox lumps move: motors are untouched (see
+        :meth:`with_estimated_motor_masses`), and so is ``input_inertia``,
+        which is a declared spec rather than a property of the housing. A
+        lump's inertia tensor is scaled by the mass ratio, holding its shape
+        and size fixed.
+
+        Gearboxes with no ``rated_torque`` keep their declared mass.
+        """
+        arm = copy.deepcopy(self)
+        for name, row in self.gearbox_mass_estimates().items():
+            est = row["estimated"]
+            if est is None:
+                continue
+            lump = arm.drives[name].gearbox
+            scale = est / lump.mass if lump.mass > 0 else 0.0
+            lump.mass = est
+            lump.inertia = lump.inertia * scale
+        return arm
+
+    def derived_link_masses(self, params) -> dict[str, dict[str, Any]]:
+        """Per-link tube + collar sizing under ``params`` (see ``link_mass``)."""
+        from arm_analyzer import link_mass
+
+        return link_mass.derive(self, params)
+
+    def with_derived_link_masses(self, params) -> "ArmDescription":
+        """A copy whose links weigh what their geometry and mounts imply.
+
+        Only the links change: drives, their lumps and every rating stay as
+        declared. A link's ``<inertial>`` is replaced wholesale -- mass, centre
+        of mass and tensor all come from the tube and its collars.
+        """
+        arm = copy.deepcopy(self)
+        for name, row in self.derived_link_masses(params).items():
+            link = arm.links[name]
+            link.inertial = row["properties"]
+            link.has_inertial = True
+        return arm
+
+    def with_estimated_motor_masses(self) -> "ArmDescription":
+        """A copy whose motor lumps weigh what their torque rating implies.
+
+        Only the motor lumps move: gearboxes are untouched (the fit does not
+        cover them), and so is ``rotor_inertia``, which is a declared motor
+        spec rather than a property of the housing. A lump's inertia tensor is
+        scaled by the mass ratio, which holds its shape and size fixed and
+        varies its density -- the conservative reading, since the fit says
+        nothing about how a heavier motor is shaped.
+
+        Motors with no ``peak_torque`` keep their declared mass.
+        """
+        arm = copy.deepcopy(self)
+        for name, row in self.motor_mass_estimates().items():
+            est = row["estimated"]
+            if est is None:
+                continue
+            lump = arm.drives[name].motor
+            scale = est / lump.mass if lump.mass > 0 else 0.0
+            lump.mass = est
+            lump.inertia = lump.inertia * scale
+        # deepcopy keeps shared references, so a Coupling's ``drives`` list
+        # still points at the very Drive objects in ``arm.drives``.
+        return arm
 
     def to_dict(self) -> dict[str, Any]:
         """Pose-independent model for the browser (see ``web/kinematics.js``)."""
@@ -856,6 +997,22 @@ def _check_efficiency(what: str, value: float) -> None:
         raise ValueError(f"{what}: efficiency must be in (0, 1], got {value}")
 
 
+def _motor_form(el: ET.Element, what: str) -> str:
+    """``form=`` on a ``<motor>``, defaulting to frameless."""
+    try:
+        return motor_mass.normalize_form(el.get("form"))
+    except ValueError as e:
+        raise ValueError(f"{what}: {e}") from e
+
+
+def _gearbox_kind(el: ET.Element, what: str) -> str:
+    """``type=`` on a ``<gearbox>``, defaulting to harmonic."""
+    try:
+        return gearbox_mass.normalize_type(el.get("type"))
+    except ValueError as e:
+        raise ValueError(f"{what}: {e}") from e
+
+
 def _parse_drive(el: ET.Element, joint: str, links: dict[str, Link]) -> Drive:
     motor_el, gb_el = el.find("motor"), el.find("gearbox")
     if motor_el is None or gb_el is None:
@@ -869,6 +1026,7 @@ def _parse_drive(el: ET.Element, joint: str, links: dict[str, Link]) -> Drive:
         no_load_speed=_speed_attr(motor_el, "no_load_speed", mw),
         torque_constant=_attr_float(motor_el, "torque_constant", mw, positive=True),
         resistance=_attr_float(motor_el, "resistance", mw, positive=True),
+        form=_motor_form(motor_el, mw),
     )
     if motor_spec.rotor_inertia < 0:
         raise ValueError(f"{mw}: rotor_inertia must not be negative")
@@ -881,6 +1039,7 @@ def _parse_drive(el: ET.Element, joint: str, links: dict[str, Link]) -> Drive:
         peak_torque=_attr_float(gb_el, "peak_torque", gw, positive=True),
         rated_torque=_attr_float(gb_el, "rated_torque", gw, positive=True),
         max_input_speed=_speed_attr(gb_el, "max_input_speed", gw),
+        kind=_gearbox_kind(gb_el, gw),
     )
     tr = el.find("transmission")
     tw = f"joint {joint!r} transmission"

@@ -63,8 +63,15 @@ class DynamicsModel:
     coupled: list[tuple[np.ndarray, np.ndarray]] = field(default_factory=list)
 
     @staticmethod
-    def build(arm: ArmDescription, payload: Optional[Payload] = None) -> "DynamicsModel":
-        model = build_model(arm)
+    def build(
+        arm: ArmDescription,
+        payload: Optional[Payload] = None,
+        *,
+        link_inertias: Optional[dict] = None,
+    ) -> "DynamicsModel":
+        """``link_inertias`` replaces the file's structural inertia link by
+        link, for a derived link mass (see ``pin_model.set_link_inertias``)."""
+        model = build_model(arm, link_inertias=link_inertias)
         if payload is not None and payload.mass > 0:
             if payload.link not in arm.links:
                 raise ValueError(f"payload link {payload.link!r} is not in the robot")

@@ -170,7 +170,38 @@
               <span>Rate (Hz)</span>
               <input type="number" id="opt-rate" min="10" max="2000" step="10" value="200" />
             </label>
+            <label class="mini">
+              <span>Gearbox mass</span>
+              <select id="opt-gearbox-mass" title="Declared: the &lt;mass&gt; in the URDF. From torque rating: an empirical reducer law, mass ∝ T_out^0.69 with a per-type offset, applied to each gearbox's rated_torque and re-run through the dynamics.">
+                <option value="declared">declared</option>
+                <option value="model">from torque rating</option>
+              </select>
+            </label>
+            <label class="mini">
+              <span>Motor mass</span>
+              <select id="opt-motor-mass" title="Declared: the &lt;mass&gt; in the URDF. From torque rating: an empirical BLDC power law, mass ∝ τ^0.82, applied to each motor's peak_torque and re-run through the dynamics.">
+                <option value="declared">declared</option>
+                <option value="model">from torque rating</option>
+              </select>
+            </label>
           </div>
+          <details id="link-mass-panel" class="opt-group">
+            <summary>
+              Link mass
+              <span class="hint" id="lm-summary">declared</span>
+            </summary>
+            <div class="lm-body">
+              <label class="mini">
+                <span>Source</span>
+                <select id="lm-mode" title="Declared: the &lt;inertial&gt; blocks in the URDF. Derived: size each link as a tube spanning its own joints, plus a collar per mounted motor or gearbox.">
+                  <option value="declared">declared</option>
+                  <option value="derived">derived from geometry</option>
+                </select>
+              </label>
+              <div id="lm-sliders" class="lm-sliders"></div>
+              <p class="hint" id="lm-note"></p>
+            </div>
+          </details>
           <div class="plot-controls">
             <div class="seg" id="plot-side" role="radiogroup">
               <button type="button" data-value="joint" aria-pressed="true" title="Joint torque vs joint speed, against the drive envelope referred to the joint">Joint</button>
@@ -182,6 +213,18 @@
         </div>
         <div class="panel-scroll">
           <div id="st-grid" class="st-grid"></div>
+          <section id="coupling-section" hidden>
+            <h3 class="section-title">Joint → motor map</h3>
+            <p class="hint">
+              Coupled drives share their joints. The run is traced in the plane of the two joint
+              torques; the <b>solid</b> region is what the pair of motors can hold at stall,
+              <b>dashed green</b> continuously, and the faint <b>grey box</b> is what the two joint
+              ratings suggest on their own. A differential's region is a diamond, so both joints can
+              be inside their own limits while their sum is not. ✛ marks the sample that sizes each
+              motor.
+            </p>
+            <div id="coupling-grid" class="cm-grid"></div>
+          </section>
           <h3 class="section-title">Drive summary</h3>
           <div id="summary" class="summary">
             <p class="hint">Load a trajectory to analyse the drives.</p>

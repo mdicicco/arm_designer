@@ -23,20 +23,20 @@
     <!-- range -170..170 deg, 360 deg/s; effort is derived from the drive -->
     <limit lower="-2.96706" upper="2.96706" velocity="6.28319"/>
     <drive>
-      <motor name="j1_motor" link="base_link" rotor_inertia="1.0e-4"
+      <motor name="j1_motor" link="base_link" form="industrial" rotor_inertia="1.0e-4"
              peak_torque="7" continuous_torque="2.4"
              stall_torque="14" no_load_speed="838"
              torque_constant="0.45" resistance="0.8">
         <origin xyz="-0.06 0 0.075" rpy="0 0 0"/>
-        <mass value="2.5"/>
-        <geometry><cylinder radius="0.045" length="0.14"/></geometry>
+        <mass value="2.26047"/>
+        <geometry><cylinder radius="0.0422664" length="0.131496"/></geometry>
       </motor>
       <gearbox name="j1_gearbox" link="base_link" ratio="120" efficiency="1.00"
                input_inertia="1.0e-5" peak_torque="350" rated_torque="150"
                max_input_speed="900">
         <origin xyz="0 0 0.16" rpy="0 0 0"/>
-        <mass value="3"/>
-        <geometry><cylinder radius="0.08" length="0.06"/></geometry>
+        <mass value="3.55415"/>
+        <geometry><cylinder radius="0.0787984" length="0.0590988"/></geometry>
       </gearbox>
       <!-- joint elements (gear unit drives the column directly) -->
       <transmission ratio="1" efficiency="1.00"/>
@@ -67,20 +67,20 @@
     <!-- range -100..135 deg, 300 deg/s; effort is derived from the drive -->
     <limit lower="-1.74533" upper="2.35619" velocity="5.23599"/>
     <drive>
-      <motor name="j2_motor" link="link1" rotor_inertia="1.0e-4"
+      <motor name="j2_motor" link="link1" form="industrial" rotor_inertia="1.0e-4"
              peak_torque="7" continuous_torque="2.4"
              stall_torque="14" no_load_speed="838"
              torque_constant="0.45" resistance="0.8">
         <origin xyz="0.025 -0.19 0.2" rpy="-1.570796 0 0"/>
-        <mass value="2.5"/>
-        <geometry><cylinder radius="0.045" length="0.14"/></geometry>
+        <mass value="2.26047"/>
+        <geometry><cylinder radius="0.0422664" length="0.131496"/></geometry>
       </motor>
       <gearbox name="j2_gearbox" link="link1" ratio="120" efficiency="1.00"
                input_inertia="1.0e-5" peak_torque="350" rated_torque="150"
                max_input_speed="900">
         <origin xyz="0.025 -0.1 0.2" rpy="-1.570796 0 0"/>
-        <mass value="3"/>
-        <geometry><cylinder radius="0.07" length="0.05"/></geometry>
+        <mass value="3.55415"/>
+        <geometry><cylinder radius="0.0800904" length="0.0572074"/></geometry>
       </gearbox>
       <!-- joint elements (gear unit drives the rocker directly) -->
       <transmission ratio="1" efficiency="1.00"/>
@@ -106,20 +106,20 @@
     <!-- range -156..120 deg, 360 deg/s; effort is derived from the drive -->
     <limit lower="-2.72271" upper="2.0944" velocity="6.28319"/>
     <drive>
-      <motor name="j3_motor" link="link3" rotor_inertia="3.0e-5"
+      <motor name="j3_motor" link="link3" form="industrial" rotor_inertia="3.0e-5"
              peak_torque="3.2" continuous_torque="1.1"
              stall_torque="6" no_load_speed="838"
              torque_constant="0.35" resistance="1.6">
         <origin xyz="-0.02 0.17 0" rpy="-1.570796 0 0"/>
-        <mass value="1.5"/>
-        <geometry><cylinder radius="0.035" length="0.12"/></geometry>
+        <mass value="1.30992"/>
+        <geometry><cylinder radius="0.034115" length="0.116966"/></geometry>
       </motor>
       <gearbox name="j3_gearbox" link="link3" ratio="100" efficiency="1.00"
                input_inertia="5.0e-6" peak_torque="200" rated_torque="90"
                max_input_speed="900">
         <origin xyz="0 0.08 0" rpy="-1.570796 0 0"/>
-        <mass value="1.8"/>
-        <geometry><cylinder radius="0.06" length="0.04"/></geometry>
+        <mass value="2.50016"/>
+        <geometry><cylinder radius="0.0728861" length="0.0485908"/></geometry>
       </gearbox>
       <!-- joint elements (A3 motor and gear unit ride on the arm housing at the elbow) -->
       <transmission ratio="1" efficiency="1.00"/>
@@ -145,20 +145,20 @@
     <!-- range -185..185 deg, 381 deg/s; effort is derived from the drive -->
     <limit lower="-3.22886" upper="3.22886" velocity="6.6497"/>
     <drive>
-      <motor name="j4_motor" link="link3" rotor_inertia="1.0e-5"
+      <motor name="j4_motor" link="link3" form="industrial" rotor_inertia="1.0e-5"
              peak_torque="1.3" continuous_torque="0.45"
              stall_torque="3" no_load_speed="838"
              torque_constant="0.25" resistance="3">
         <origin xyz="-0.14 0 0.075" rpy="0 1.570796 0"/>
-        <mass value="0.8"/>
-        <geometry><cylinder radius="0.028" length="0.1"/></geometry>
+        <mass value="0.699138"/>
+        <geometry><cylinder radius="0.0272987" length="0.0974952"/></geometry>
       </motor>
       <gearbox name="j4_gearbox" link="link3" ratio="80" efficiency="1.00"
                input_inertia="2.0e-6" peak_torque="60" rated_torque="25"
                max_input_speed="1000">
         <origin xyz="0.1 0 0.035" rpy="0 1.570796 0"/>
-        <mass value="0.8"/>
-        <geometry><cylinder radius="0.045" length="0.04"/></geometry>
+        <mass value="1.03323"/>
+        <geometry><cylinder radius="0.0493259" length="0.0438453"/></geometry>
       </gearbox>
       <!-- drive shaft from the rear motor pack to the A4 gear unit -->
       <transmission ratio="1" efficiency="1.00"/>
@@ -184,20 +184,20 @@
     <!-- range -120..120 deg, 388 deg/s; effort is derived from the drive -->
     <limit lower="-2.0944" upper="2.0944" velocity="6.77188"/>
     <drive>
-      <motor name="j5_motor" link="link3" rotor_inertia="1.0e-5"
+      <motor name="j5_motor" link="link3" form="industrial" rotor_inertia="1.0e-5"
              peak_torque="1.3" continuous_torque="0.45"
              stall_torque="3" no_load_speed="838"
              torque_constant="0.25" resistance="3">
         <origin xyz="-0.14 0.035 0" rpy="0 1.570796 0"/>
-        <mass value="0.8"/>
-        <geometry><cylinder radius="0.028" length="0.1"/></geometry>
+        <mass value="0.699138"/>
+        <geometry><cylinder radius="0.0272987" length="0.0974952"/></geometry>
       </motor>
       <gearbox name="j5_gearbox" link="link4" ratio="80" efficiency="1.00"
                input_inertia="2.0e-6" peak_torque="60" rated_torque="25"
                max_input_speed="1000">
         <origin xyz="0.28 0 0" rpy="-1.570796 0 0"/>
-        <mass value="0.6"/>
-        <geometry><cylinder radius="0.035" length="0.03"/></geometry>
+        <mass value="1.03323"/>
+        <geometry><cylinder radius="0.0499275" length="0.042795"/></geometry>
       </gearbox>
       <!-- hollow shaft through the forearm + bevel stage to the A5 gear unit in the wrist -->
       <transmission ratio="1" efficiency="1.00"/>
@@ -223,20 +223,20 @@
     <!-- range -350..350 deg, 615 deg/s; effort is derived from the drive -->
     <limit lower="-6.10865" upper="6.10865" velocity="10.7338"/>
     <drive>
-      <motor name="j6_motor" link="link3" rotor_inertia="5.0e-6"
+      <motor name="j6_motor" link="link3" form="industrial" rotor_inertia="5.0e-6"
              peak_torque="0.64" continuous_torque="0.22"
              stall_torque="1.6" no_load_speed="838"
              torque_constant="0.2" resistance="5">
         <origin xyz="-0.14 -0.035 0" rpy="0 1.570796 0"/>
-        <mass value="0.6"/>
-        <geometry><cylinder radius="0.024" length="0.09"/></geometry>
+        <mass value="0.426622"/>
+        <geometry><cylinder radius="0.0227809" length="0.0854285"/></geometry>
       </motor>
       <gearbox name="j6_gearbox" link="link5" ratio="50" efficiency="1.00"
                input_inertia="1.0e-6" peak_torque="20" rated_torque="8"
                max_input_speed="1200">
         <origin xyz="0.04 0 0" rpy="0 1.570796 0"/>
-        <mass value="0.4"/>
-        <geometry><cylinder radius="0.03" length="0.03"/></geometry>
+        <mass value="0.47165"/>
+        <geometry><cylinder radius="0.0365173" length="0.0365173"/></geometry>
       </gearbox>
       <!-- concentric shaft through the forearm and wrist to the A6 gear unit at the flange -->
       <transmission ratio="1" efficiency="1.00"/>

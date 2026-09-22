@@ -11,6 +11,12 @@
 // structural edit, never while the user is typing in them.
 
 import { SERIES_COLORS, fmt, fmtPct } from "./format.js";
+import { LOO_MAE_KG, estimateMotorMass, motorMassOutOfRange } from "./motor_mass.js";
+import {
+  LOO_MAE_KG as GEARBOX_LOO_MAE_KG,
+  estimateGearboxMass,
+  gearboxMassOutOfRange,
+} from "./gearbox_mass.js";
 
 const RAD = Math.PI / 180;
 const RPM = (2 * Math.PI) / 60;
@@ -583,6 +589,23 @@ export class Inspector {
             return `Reflected at the joint: <b>${fmt(x.reflected_inertia, 3)} kg·m²</b> (× ${fmt(x.total_ratio, 0)}²)`;
           }),
           this.derivedLine(() => {
+            const x = d();
+            const est = estimateMotorMass(x?.motor?.peak_torque, x?.motor?.form);
+            if (est == null) return "";
+            const note = motorMassOutOfRange(x.motor.peak_torque, x.motor.form);
+            const declared = x.motor.mass;
+            const cmp =
+              declared > 0
+                ? ` — declared <b>${fmt(declared, 3)} kg</b> is ${fmt(declared / est, 2)}× that`
+                : "";
+            return (
+              `A <b>${x.motor.form || "frameless"}</b> motor rated for this torque weighs`
+              + ` about <b>${fmt(est, 3)} kg</b>`
+              + ` (±${fmt(LOO_MAE_KG, 2)})${cmp}.`
+              + (note ? ` <span class="u-marginal">Extrapolating: ${note}.</span>` : "")
+            );
+          }),
+          this.derivedLine(() => {
             const c = this.model?.couplingByJoint.get(jointName);
             if (!c) return "";
             const others = c.joints.filter((n) => n !== jointName).join(", ");
@@ -610,6 +633,22 @@ export class Inspector {
         this.derivedLine(() => {
           const x = d();
           return x ? `Total ratio with transmission: <b>${fmt(x.total_ratio, 2)} : 1</b>` : "";
+        }),
+        this.derivedLine(() => {
+          const g = d()?.gearbox;
+          const est = estimateGearboxMass(g?.rated_torque, g?.ratio, g?.kind);
+          if (est == null) return "";
+          const note = gearboxMassOutOfRange(g.rated_torque, g.ratio, g.kind);
+          const cmp =
+            g.mass > 0
+              ? ` — declared <b>${fmt(g.mass, 3)} kg</b> is ${fmt(g.mass / est, 2)}× that`
+              : "";
+          return (
+            `A <b>${g.kind || "harmonic"}</b> reducer of this rating weighs about `
+            + `<b>${fmt(est, 3)} kg</b> (±${fmt(GEARBOX_LOO_MAE_KG, 2)})${cmp}.`
+            + ` Ratio barely affects it — frame size does.`
+            + (note ? ` <span class="u-marginal">Extrapolating: ${note}.</span>` : "")
+          );
         })
       ),
     ];

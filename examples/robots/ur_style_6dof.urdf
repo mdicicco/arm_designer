@@ -24,20 +24,20 @@
     <!-- range -360..360 deg, 180 deg/s; effort is derived from the drive -->
     <limit lower="-6.28319" upper="6.28319" velocity="3.14159"/>
     <drive>
-      <motor name="j1_motor" link="base_link" rotor_inertia="4.5e-5"
+      <motor name="j1_motor" link="base_link" form="integrated" rotor_inertia="4.5e-5"
              peak_torque="1.6" continuous_torque="0.58"
              stall_torque="3.2" no_load_speed="480"
              torque_constant="0.24" resistance="1.1">
         <origin xyz="0 0 0.055" rpy="0 0 0"/>
-        <mass value="1.15"/>
-        <geometry><cylinder radius="0.038" length="0.075"/></geometry>
+        <mass value="0.903373"/>
+        <geometry><cylinder radius="0.0358995" length="0.0708544"/></geometry>
       </motor>
       <gearbox name="j1_gear_unit" link="link1" ratio="101" efficiency="1.00"
                input_inertia="8.0e-6" peak_torque="210" rated_torque="150"
                max_input_speed="500">
         <origin xyz="0 0 0" rpy="0 0 0"/>
-        <mass value="1.1"/>
-        <geometry><cylinder radius="0.055" length="0.035"/></geometry>
+        <mass value="3.55832"/>
+        <geometry><cylinder radius="0.0832668" length="0.052988"/></geometry>
       </gearbox>
       <!-- harmonic gear unit inside the shoulder module -->
       <transmission ratio="1" efficiency="1.00"/>
@@ -63,20 +63,20 @@
     <!-- range -360..360 deg, 180 deg/s; effort is derived from the drive -->
     <limit lower="-6.28319" upper="6.28319" velocity="3.14159"/>
     <drive>
-      <motor name="j2_motor" link="link1" rotor_inertia="4.5e-5"
+      <motor name="j2_motor" link="link1" form="integrated" rotor_inertia="4.5e-5"
              peak_torque="1.6" continuous_torque="0.58"
              stall_torque="3.2" no_load_speed="480"
              torque_constant="0.24" resistance="1.1">
         <origin xyz="0 0.085 0" rpy="-1.570796 0 0"/>
-        <mass value="1.15"/>
-        <geometry><cylinder radius="0.038" length="0.075"/></geometry>
+        <mass value="0.903373"/>
+        <geometry><cylinder radius="0.0358995" length="0.0708544"/></geometry>
       </motor>
       <gearbox name="j2_gear_unit" link="link2" ratio="101" efficiency="1.00"
                input_inertia="8.0e-6" peak_torque="210" rated_torque="150"
                max_input_speed="500">
         <origin xyz="0 0.02 0" rpy="-1.570796 0 0"/>
-        <mass value="1.1"/>
-        <geometry><cylinder radius="0.055" length="0.035"/></geometry>
+        <mass value="3.55832"/>
+        <geometry><cylinder radius="0.0832668" length="0.052988"/></geometry>
       </gearbox>
       <!-- harmonic gear unit inside the shoulder-lift module -->
       <transmission ratio="1" efficiency="1.00"/>
@@ -102,20 +102,20 @@
     <!-- range -160..160 deg, 180 deg/s; effort is derived from the drive -->
     <limit lower="-2.79253" upper="2.79253" velocity="3.14159"/>
     <drive>
-      <motor name="j3_motor" link="link2" rotor_inertia="2.2e-5"
+      <motor name="j3_motor" link="link2" form="integrated" rotor_inertia="2.2e-5"
              peak_torque="1.4" continuous_torque="0.58"
              stall_torque="2.8" no_load_speed="480"
              torque_constant="0.22" resistance="1.6">
         <origin xyz="0 -0.025 0.405" rpy="-1.570796 0 0"/>
-        <mass value="0.8"/>
-        <geometry><cylinder radius="0.032" length="0.065"/></geometry>
+        <mass value="0.823086"/>
+        <geometry><cylinder radius="0.0344709" length="0.0700191"/></geometry>
       </motor>
       <gearbox name="j3_gear_unit" link="link3" ratio="101" efficiency="1.00"
                input_inertia="5.0e-6" peak_torque="210" rated_torque="150"
                max_input_speed="500">
         <origin xyz="0 0 0.02" rpy="-1.570796 0 0"/>
-        <mass value="0.8"/>
-        <geometry><cylinder radius="0.048" length="0.03"/></geometry>
+        <mass value="3.55832"/>
+        <geometry><cylinder radius="0.0837685" length="0.0523553"/></geometry>
       </gearbox>
       <!-- harmonic gear unit inside the elbow module -->
       <transmission ratio="1" efficiency="1.00"/>
@@ -141,20 +141,20 @@
     <!-- range -360..360 deg, 360 deg/s; effort is derived from the drive -->
     <limit lower="-6.28319" upper="6.28319" velocity="6.28319"/>
     <drive>
-      <motor name="j4_motor" link="link3" rotor_inertia="7.0e-6"
+      <motor name="j4_motor" link="link3" form="integrated" rotor_inertia="7.0e-6"
              peak_torque="0.58" continuous_torque="0.21"
              stall_torque="1.2" no_load_speed="620"
              torque_constant="0.16" resistance="3.2">
         <origin xyz="0 0.03 0.3622" rpy="-1.570796 0 0"/>
-        <mass value="0.45"/>
-        <geometry><cylinder radius="0.026" length="0.05"/></geometry>
+        <mass value="0.44534"/>
+        <geometry><cylinder radius="0.028606" length="0.0550116"/></geometry>
       </motor>
       <gearbox name="j4_gear_unit" link="link4" ratio="50" efficiency="1.00"
                input_inertia="1.5e-6" peak_torque="40" rated_torque="28"
                max_input_speed="650">
         <origin xyz="0 0.02 0" rpy="-1.570796 0 0"/>
-        <mass value="0.45"/>
-        <geometry><cylinder radius="0.04" length="0.025"/></geometry>
+        <mass value="1.12097"/>
+        <geometry><cylinder radius="0.0569986" length="0.0356241"/></geometry>
       </gearbox>
       <!-- harmonic gear unit inside the wrist-1 module -->
       <transmission ratio="1" efficiency="1.00"/>
@@ -180,20 +180,20 @@
     <!-- range -360..360 deg, 360 deg/s; effort is derived from the drive -->
     <limit lower="-6.28319" upper="6.28319" velocity="6.28319"/>
     <drive>
-      <motor name="j5_motor" link="link4" rotor_inertia="7.0e-6"
+      <motor name="j5_motor" link="link4" form="integrated" rotor_inertia="7.0e-6"
              peak_torque="0.58" continuous_torque="0.21"
              stall_torque="1.2" no_load_speed="620"
              torque_constant="0.16" resistance="3.2">
         <origin xyz="0 0.1033 0.03" rpy="0 0 0"/>
-        <mass value="0.45"/>
-        <geometry><cylinder radius="0.026" length="0.05"/></geometry>
+        <mass value="0.44534"/>
+        <geometry><cylinder radius="0.028606" length="0.0550116"/></geometry>
       </motor>
       <gearbox name="j5_gear_unit" link="link5" ratio="50" efficiency="1.00"
                input_inertia="1.5e-6" peak_torque="40" rated_torque="28"
                max_input_speed="650">
         <origin xyz="0 0 0.02" rpy="0 0 0"/>
-        <mass value="0.45"/>
-        <geometry><cylinder radius="0.04" length="0.025"/></geometry>
+        <mass value="1.12097"/>
+        <geometry><cylinder radius="0.0569986" length="0.0356241"/></geometry>
       </gearbox>
       <!-- harmonic gear unit inside the wrist-2 module -->
       <transmission ratio="1" efficiency="1.00"/>
@@ -219,20 +219,20 @@
     <!-- range -360..360 deg, 360 deg/s; effort is derived from the drive -->
     <limit lower="-6.28319" upper="6.28319" velocity="6.28319"/>
     <drive>
-      <motor name="j6_motor" link="link5" rotor_inertia="7.0e-6"
+      <motor name="j6_motor" link="link5" form="integrated" rotor_inertia="7.0e-6"
              peak_torque="0.58" continuous_torque="0.21"
              stall_torque="1.2" no_load_speed="620"
              torque_constant="0.16" resistance="3.2">
         <origin xyz="0 0.03 0.0697" rpy="-1.570796 0 0"/>
-        <mass value="0.45"/>
-        <geometry><cylinder radius="0.026" length="0.05"/></geometry>
+        <mass value="0.44534"/>
+        <geometry><cylinder radius="0.028606" length="0.0550116"/></geometry>
       </motor>
       <gearbox name="j6_gear_unit" link="link6" ratio="50" efficiency="1.00"
                input_inertia="1.5e-6" peak_torque="40" rated_torque="28"
                max_input_speed="650">
         <origin xyz="0 0.01 0" rpy="-1.570796 0 0"/>
-        <mass value="0.35"/>
-        <geometry><cylinder radius="0.035" length="0.02"/></geometry>
+        <mass value="1.12097"/>
+        <geometry><cylinder radius="0.0587268" length="0.0335582"/></geometry>
       </gearbox>
       <!-- harmonic gear unit inside the wrist-3 module -->
       <transmission ratio="1" efficiency="1.00"/>

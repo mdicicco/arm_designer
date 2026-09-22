@@ -28,7 +28,13 @@ from __future__ import annotations
 import math
 from pathlib import Path
 
+from urdf_parts import gearbox_body_for, motor_body_for
+
 OUT = Path(__file__).resolve().parents[1] / "examples" / "robots" / "kr_style_6dof.urdf"
+
+# Construction of the real robot's motors, which sets their mass (see
+# arm_analyzer.motor_mass -- form moves it more than the rating does).
+MOTOR_FORM = "industrial"
 
 GEARBOX_EFFICIENCY = 1.0
 TRANSMISSION_EFFICIENCY = 1.0
@@ -71,10 +77,10 @@ LINKS = {
 COLORS = {"base_link": "0.30 0.33 0.38 1"}
 
 # Motors: (mass, radius, length, rotor inertia, peak, continuous, stall, no-load rad/s, kt, R)
-MOTOR_750W = (2.5, 0.045, 0.14, "1.0e-4", 7.0, 2.4, 14.0, 838, 0.45, 0.8)
-MOTOR_400W = (1.5, 0.035, 0.12, "3.0e-5", 3.2, 1.1, 6.0, 838, 0.35, 1.6)
-MOTOR_200W = (0.8, 0.028, 0.10, "1.0e-5", 1.3, 0.45, 3.0, 838, 0.25, 3.0)
-MOTOR_100W = (0.6, 0.024, 0.09, "5.0e-6", 0.64, 0.22, 1.6, 838, 0.20, 5.0)
+MOTOR_750W = (0.045, 0.14, "1.0e-4", 7.0, 2.4, 14.0, 838, 0.45, 0.8)
+MOTOR_400W = (0.035, 0.12, "3.0e-5", 3.2, 1.1, 6.0, 838, 0.35, 1.6)
+MOTOR_200W = (0.028, 0.10, "1.0e-5", 1.3, 0.45, 3.0, 838, 0.25, 3.0)
+MOTOR_100W = (0.024, 0.09, "5.0e-6", 0.64, 0.22, 1.6, 838, 0.20, 5.0)
 
 # Joints: name, parent, child, origin xyz, axis, lower, upper (deg), velocity (deg/s)
 JOINTS = [
@@ -92,33 +98,33 @@ JOINTS = [
 DRIVES = {
     "j1": (
         (MOTOR_750W, "base_link", (-0.06, 0, 0.075), "z"),
-        ("base_link", (0, 0, 0.16), "z", 120, "1.0e-5", 350, 150, 900, 3.0, 0.08, 0.06),
+        ("base_link", (0, 0, 0.16), "z", 120, "1.0e-5", 350, 150, 900, 0.08, 0.06),
         "joint elements (gear unit drives the column directly)",
     ),
     "j2": (
         (MOTOR_750W, "link1", (0.025, -0.19, 0.20), "y"),
-        ("link1", (0.025, -0.10, 0.20), "y", 120, "1.0e-5", 350, 150, 900, 3.0, 0.07, 0.05),
+        ("link1", (0.025, -0.10, 0.20), "y", 120, "1.0e-5", 350, 150, 900, 0.07, 0.05),
         "joint elements (gear unit drives the rocker directly)",
     ),
     "j3": (
         (MOTOR_400W, "link3", (-0.02, 0.17, 0.0), "y"),
-        ("link3", (0, 0.08, 0), "y", 100, "5.0e-6", 200, 90, 900, 1.8, 0.06, 0.04),
+        ("link3", (0, 0.08, 0), "y", 100, "5.0e-6", 200, 90, 900, 0.06, 0.04),
         "joint elements (A3 motor and gear unit ride on the arm housing at the elbow)",
     ),
     # Wrist motor pack at the rear of the arm housing, behind the elbow.
     "j4": (
         (MOTOR_200W, "link3", (-0.14, 0, 0.075), "x"),
-        ("link3", (0.10, 0, 0.035), "x", 80, "2.0e-6", 60, 25, 1000, 0.8, 0.045, 0.04),
+        ("link3", (0.10, 0, 0.035), "x", 80, "2.0e-6", 60, 25, 1000, 0.045, 0.04),
         "drive shaft from the rear motor pack to the A4 gear unit",
     ),
     "j5": (
         (MOTOR_200W, "link3", (-0.14, 0.035, 0.0), "x"),
-        ("link4", (0.28, 0, 0), "y", 80, "2.0e-6", 60, 25, 1000, 0.6, 0.035, 0.03),
+        ("link4", (0.28, 0, 0), "y", 80, "2.0e-6", 60, 25, 1000, 0.035, 0.03),
         "hollow shaft through the forearm + bevel stage to the A5 gear unit in the wrist",
     ),
     "j6": (
         (MOTOR_100W, "link3", (-0.14, -0.035, 0.0), "x"),
-        ("link5", (0.04, 0, 0), "x", 50, "1.0e-6", 20, 8, 1200, 0.4, 0.03, 0.03),
+        ("link5", (0.04, 0, 0), "x", 50, "1.0e-6", 20, 8, 1200, 0.03, 0.03),
         "concentric shaft through the forearm and wrist to the A6 gear unit at the flange",
     ),
 }
@@ -184,10 +190,12 @@ def link_xml(name: str) -> str:
 
 def drive_xml(joint: str) -> str:
     (spec, m_host, m_xyz, m_axis), gb, comment = DRIVES[joint]
-    mass, radius, length, rotor, peak, cont, stall, nl, kt, res = spec
-    gb_host, gb_xyz, gb_axis, ratio, gb_in, gb_peak, gb_rated, gb_max, gb_mass, gb_r, gb_l = gb
+    radius, length, rotor, peak, cont, stall, nl, kt, res = spec
+    mass, radius, length = motor_body_for(peak, radius, length, MOTOR_FORM)
+    gb_host, gb_xyz, gb_axis, ratio, gb_in, gb_peak, gb_rated, gb_max, gb_r, gb_l = gb
+    gb_mass, gb_r, gb_l = gearbox_body_for(gb_rated, ratio, gb_r, gb_l)
     return f"""    <drive>
-      <motor name="{joint}_motor" link="{m_host}" rotor_inertia="{rotor}"
+      <motor name="{joint}_motor" link="{m_host}" form="{MOTOR_FORM}" rotor_inertia="{rotor}"
              peak_torque="{g(peak)}" continuous_torque="{g(cont)}"
              stall_torque="{g(stall)}" no_load_speed="{g(nl)}"
              torque_constant="{g(kt)}" resistance="{g(res)}">

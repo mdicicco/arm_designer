@@ -270,5 +270,8 @@ def test_ur_style_reaches_the_whole_tour():
     result = analyze(arm, plan, rate_hz=100)
     over = {s["name"] for s in result["summary"] if s["status"] == "over"}
     assert over == {"j4"}  # 106% of its declared 360 deg/s, no torque problem
+    # Thermally fine everywhere -- the point is that nothing is torque-limited.
+    # The bound moves with the motor masses, which follow their ratings and
+    # construction (see test_motor_mass), so keep it loose.
     for s in result["summary"]:
-        assert s["drive"]["motor"]["rms_util"] < 0.5
+        assert s["drive"]["motor"]["rms_util"] < 0.65

@@ -21,6 +21,8 @@ from __future__ import annotations
 import math
 from pathlib import Path
 
+from urdf_parts import gearbox_body_for, motor_body_for
+
 OUT_DIR = Path(__file__).resolve().parents[1] / "examples" / "robots"
 
 HALF_PI = f"{-math.pi / 2:.6f}"  # rpy roll that turns local +Z onto +Y
@@ -37,41 +39,46 @@ LINKS = [
 ]
 
 LARGE_MOTOR = dict(
-    mass=0.45, radius=0.035, length=0.07, rotor_inertia="4.0e-5", peak_torque=1.3,
+    radius=0.035, length=0.07, rotor_inertia="4.0e-5", peak_torque=1.3,
     continuous_torque=0.45, stall_torque=3.2, no_load_speed=628, torque_constant=0.07,
     resistance=0.5,
 )
 MEDIUM_MOTOR = dict(
-    mass=0.30, radius=0.028, length=0.05, rotor_inertia="1.5e-5", peak_torque=0.64,
+    radius=0.028, length=0.05, rotor_inertia="1.5e-5", peak_torque=0.64,
     continuous_torque=0.22, stall_torque=1.6, no_load_speed=680, torque_constant=0.05,
     resistance=1.1,
 )
 SMALL_MOTOR = dict(
-    mass=0.15, radius=0.02, length=0.04, rotor_inertia="4.0e-6", peak_torque=0.26,
+    radius=0.02, length=0.04, rotor_inertia="4.0e-6", peak_torque=0.26,
     continuous_torque=0.09, stall_torque=0.7, no_load_speed=900, torque_constant=0.03,
     resistance=2.2,
 )
 
 # joint, parent, child, origin z, axis, lower, upper, velocity,
-# motor, gearbox (ratio, input_inertia, peak, rated, max_in, mass, r, L)
+# motor, gearbox (ratio, input_inertia, peak, rated, max_in, r, L) -- the
+# gearbox mass follows from its rated output torque, and r/L give its shape
 JOINTS = [
     ("j1", "base_link", "link1", 0.14, "z", -2.97, 2.97, 3.0, LARGE_MOTOR,
-     (100, "5e-6", 150, 60, 700, 0.60, 0.045, 0.05)),
+     (100, "5e-6", 150, 60, 700, 0.045, 0.05)),
     ("j2", "link1", "link2", 0.12, "y", -2.0, 2.0, 2.5, LARGE_MOTOR,
-     (120, "5e-6", 180, 80, 700, 0.70, 0.045, 0.05)),
+     (120, "5e-6", 180, 80, 700, 0.045, 0.05)),
     ("j3", "link2", "link3", 0.35, "y", -2.5, 2.5, 3.0, MEDIUM_MOTOR,
-     (100, "2e-6", 60, 25, 700, 0.35, 0.038, 0.04)),
+     (100, "2e-6", 60, 25, 700, 0.038, 0.04)),
     ("j4", "link3", "link4", 0.30, "z", -3.0, 3.0, 5.0, SMALL_MOTOR,
-     (80, "5e-7", 16, 7, 1000, 0.18, 0.03, 0.03)),
+     (80, "5e-7", 16, 7, 1000, 0.03, 0.03)),
     ("j5", "link4", "link5", 0.08, "y", -2.0, 2.0, 5.0, SMALL_MOTOR,
-     (80, "5e-7", 16, 7, 1000, 0.18, 0.028, 0.03)),
+     (80, "5e-7", 16, 7, 1000, 0.028, 0.03)),
     ("j6", "link5", "link6", 0.08, "z", -3.14, 3.14, 6.0, SMALL_MOTOR,
-     (80, "5e-7", 16, 7, 1000, 0.18, 0.022, 0.025)),
+     (80, "5e-7", 16, 7, 1000, 0.022, 0.025)),
 ]
 
 # Loss placeholders, identical on every joint for now: gear friction goes into
 # the gearbox efficiency; joint and belt/cable/linkage friction into the
 # transmission efficiency. 1.0 = lossless.
+# Construction of the motors, which sets their mass (see
+# arm_analyzer.motor_mass -- form moves it more than the rating does).
+MOTOR_FORM = "outrunner"
+
 GEARBOX_EFFICIENCY = 1.0
 TRANSMISSION_EFFICIENCY = 1.0
 
@@ -141,7 +148,13 @@ def link_xml(name, shape, params, cz, mass) -> str:
 
 
 def drive_xml(name, parent, z, axis, motor, gb, remote=None) -> str:
-    ratio, in_inertia, peak, rated, max_in, gb_mass, gb_r, gb_l = gb
+    ratio, in_inertia, peak, rated, max_in, gb_r, gb_l = gb
+    gb_mass, gb_r, gb_l = gearbox_body_for(rated, ratio, gb_r, gb_l)
+    # Mass from the torque rating, envelope sized to hold it; the dict's
+    # radius/length give only the motor's proportions.
+    m_mass, m_radius, m_length = motor_body_for(
+        motor["peak_torque"], motor["radius"], motor["length"], MOTOR_FORM
+    )
     comment = "joint elements (gearbox output drives the joint directly)"
     if remote:
         parent = remote["host"]
@@ -151,22 +164,22 @@ def drive_xml(name, parent, z, axis, motor, gb, remote=None) -> str:
     elif axis == "z":
         # Stack below the joint, inside the parent link.
         gb_xyz = f"0 0 {g(z - gb_l / 2 - 0.005)}"
-        m_xyz = f"0 0 {g(z - gb_l - 0.01 - motor['length'] / 2)}"
+        m_xyz = f"0 0 {g(z - gb_l - 0.01 - m_length / 2)}"
         rpy = "0 0 0"
     else:
         # Beside the joint on the +Y side, shaft along the joint axis.
         side = 0.035
         gb_xyz = f"0 {g(side + gb_l / 2)} {g(z)}"
-        m_xyz = f"0 {g(side + gb_l + motor['length'] / 2)} {g(z)}"
+        m_xyz = f"0 {g(side + gb_l + m_length / 2)} {g(z)}"
         rpy = f"{HALF_PI} 0 0"
     return f"""    <drive>
-      <motor name="{name}_motor" link="{parent}" rotor_inertia="{motor['rotor_inertia']}"
+      <motor name="{name}_motor" link="{parent}" form="{MOTOR_FORM}" rotor_inertia="{motor['rotor_inertia']}"
              peak_torque="{g(motor['peak_torque'])}" continuous_torque="{g(motor['continuous_torque'])}"
              stall_torque="{g(motor['stall_torque'])}" no_load_speed="{g(motor['no_load_speed'])}"
              torque_constant="{g(motor['torque_constant'])}" resistance="{g(motor['resistance'])}">
         <origin xyz="{m_xyz}" rpy="{rpy}"/>
-        <mass value="{g(motor['mass'])}"/>
-        <geometry><cylinder radius="{g(motor['radius'])}" length="{g(motor['length'])}"/></geometry>
+        <mass value="{g(m_mass)}"/>
+        <geometry><cylinder radius="{g(m_radius)}" length="{g(m_length)}"/></geometry>
       </motor>
       <gearbox name="{name}_gearbox" link="{parent}" ratio="{g(ratio)}" efficiency="{GEARBOX_EFFICIENCY:.2f}"
                input_inertia="{in_inertia}" peak_torque="{g(peak)}" rated_torque="{g(rated)}"

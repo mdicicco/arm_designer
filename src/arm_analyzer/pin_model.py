@@ -88,15 +88,48 @@ def attach_body(
     model.addBodyFrame(name, frame.parentJoint, placement, model.getFrameId(link, pin.FrameType.BODY))
 
 
-def build_model(arm, *, with_drives: bool = True) -> pin.Model:
+def set_link_inertias(model: pin.Model, link_inertias: dict) -> None:
+    """Replace the structural inertia urdfdom read from the file.
+
+    Link inertias reach Pinocchio through the URDF *text*, not through
+    ``ArmDescription``, so a derived link mass has to be written into the model
+    or it would move the mass budget while the torques went on using the
+    file's numbers. Call this **before** the drive lumps are attached, since
+    those are added on top of whatever a joint already carries.
+
+    ``link_inertias`` maps a link name to its ``MassProperties`` in that
+    link's own frame. A joint can carry more than one link once urdfdom has
+    merged a fixed joint away, so the links are summed per joint.
+    """
+    totals: dict[int, pin.Inertia] = {}
+    for link, props in link_inertias.items():
+        fid = model.getFrameId(link, pin.FrameType.BODY)
+        if fid >= model.nframes:
+            continue
+        frame = model.frames[fid]
+        body = pin.Inertia(float(props.mass), np.asarray(props.com), np.asarray(props.inertia))
+        # ``placement`` is link-frame-in-joint-frame, so act() carries the
+        # inertia up into the joint frame Pinocchio stores it in.
+        moved = frame.placement.act(body)
+        totals[frame.parentJoint] = totals.get(frame.parentJoint, pin.Inertia.Zero()) + moved
+    for jid, inertia in totals.items():
+        model.inertias[jid] = inertia
+
+
+def build_model(arm, *, with_drives: bool = True, link_inertias: dict | None = None) -> pin.Model:
     """Pinocchio model of ``arm``: structure, plus drive lumps and armature.
 
     ``mimic=True`` lets urdfdom's ``<mimic>`` through, so a passive linkage
     (the rod levelling a palletizer's tool plate) costs no degree of freedom.
     Coupled drives get no armature entry: their reflected inertia is a matrix,
     not a diagonal, and ``arm_analyzer.dynamics`` adds it after the RNEA.
+
+    ``link_inertias`` replaces the file's structural inertia link by link (see
+    :func:`set_link_inertias`); the drive lumps are attached on top either way.
     """
     model = pin.buildModelFromXML(normalized_urdf(arm.urdf), True)
+    if link_inertias:
+        set_link_inertias(model, link_inertias)
     if not with_drives:
         return model
     for lump in arm.lumps():

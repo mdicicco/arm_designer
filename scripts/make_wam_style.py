@@ -39,7 +39,13 @@ from __future__ import annotations
 import math
 from pathlib import Path
 
+from urdf_parts import gearbox_body_for, motor_body_for
+
 OUT = Path(__file__).resolve().parents[1] / "examples" / "robots" / "wam_style_7dof.urdf"
+
+# Construction of the real robot's motors, which sets their mass (see
+# arm_analyzer.motor_mass -- form moves it more than the rating does).
+MOTOR_FORM = "frameless"
 
 GEARBOX_EFFICIENCY = 1.0
 TRANSMISSION_EFFICIENCY = 1.0
@@ -92,9 +98,9 @@ COLORS = {"base_link": "0.30 0.33 0.38 1"}
 
 # Motors: (mass, radius, length, rotor inertia, peak, continuous, stall,
 #          no-load rad/s, kt, R). Frameless brushless rotors, as a WAM uses.
-MOTOR_INNER = (1.30, 0.042, 0.10, "6.0e-5", 2.0, 0.95, 4.0, 314, 0.28, 0.9)
-MOTOR_ELBOW = (1.00, 0.038, 0.09, "4.0e-5", 1.6, 0.50, 3.2, 314, 0.26, 1.2)
-MOTOR_WRIST = (0.45, 0.028, 0.07, "8.0e-6", 0.60, 0.20, 1.2, 419, 0.18, 3.0)
+MOTOR_INNER = (0.042, 0.10, "6.0e-5", 2.0, 0.95, 4.0, 314, 0.28, 0.9)
+MOTOR_ELBOW = (0.038, 0.09, "4.0e-5", 1.6, 0.50, 3.2, 314, 0.26, 1.2)
+MOTOR_WRIST = (0.028, 0.07, "8.0e-6", 0.60, 0.20, 1.2, 419, 0.18, 3.0)
 
 # Joints: name, parent, child, origin xyz, axis, lower, upper (deg), velocity (deg/s)
 JOINTS = [
@@ -117,39 +123,39 @@ JOINTS = [
 DRIVES = {
     "j1": (
         (MOTOR_INNER, "base_link", (0.09, 0, 0.10), "z"),
-        ("base_link", (0.09, 0, 0.20), "z", 42, "8.0e-6", 90, 40, 340, 0.60, 0.05, 0.05),
+        ("base_link", (0.09, 0, 0.20), "z", 42, "8.0e-6", 90, 40, 340, 0.05, 0.05),
         "cable from the base capstan up to the J1 pulley",
     ),
     # Shoulder differential: M2 and M3 both in the base, both feeding it.
     "j2": (
         (MOTOR_INNER, "base_link", (-0.065, 0.075, 0.10), "z"),
-        ("base_link", (-0.065, 0.075, 0.20), "z", 28.25, "8.0e-6", 90, 40, 340, 0.60, 0.05, 0.05),
+        ("base_link", (-0.065, 0.075, 0.20), "z", 28.25, "8.0e-6", 90, 40, 340, 0.05, 0.05),
         "cable to the shoulder differential (with M3)",
     ),
     "j3": (
         (MOTOR_INNER, "base_link", (-0.065, -0.075, 0.10), "z"),
-        ("base_link", (-0.065, -0.075, 0.20), "z", 28.25, "8.0e-6", 90, 40, 340, 0.60, 0.05, 0.05),
+        ("base_link", (-0.065, -0.075, 0.20), "z", 28.25, "8.0e-6", 90, 40, 340, 0.05, 0.05),
         "cable to the shoulder differential (with M2)",
     ),
     "j4": (
         (MOTOR_ELBOW, "link2", (-0.10, 0, 0.02), "z"),
-        ("link2", (-0.05, 0, 0.06), "z", 18, "6.0e-6", 60, 26, 340, 0.45, 0.045, 0.045),
+        ("link2", (-0.05, 0, 0.06), "z", 18, "6.0e-6", 60, 26, 340, 0.045, 0.045),
         "cable down the upper arm to the elbow pulley",
     ),
     # Wrist differential: M5 and M6 at the inner end of the forearm.
     "j5": (
         (MOTOR_WRIST, "link4", (0.055, 0.035, 0.05), "z"),
-        ("link4", (0.03, 0.035, 0.11), "z", 9.7, "1.0e-6", 12, 5, 460, 0.18, 0.03, 0.03),
+        ("link4", (0.03, 0.035, 0.11), "z", 9.7, "1.0e-6", 12, 5, 460, 0.03, 0.03),
         "cable along the forearm to the wrist differential (with M6)",
     ),
     "j6": (
         (MOTOR_WRIST, "link4", (0.055, -0.035, 0.05), "z"),
-        ("link4", (0.03, -0.035, 0.11), "z", 9.7, "1.0e-6", 12, 5, 460, 0.18, 0.03, 0.03),
+        ("link4", (0.03, -0.035, 0.11), "z", 9.7, "1.0e-6", 12, 5, 460, 0.03, 0.03),
         "cable along the forearm to the wrist differential (with M5)",
     ),
     "j7": (
         (MOTOR_WRIST, "link4", (-0.055, 0, 0.05), "z"),
-        ("link5", (0, 0, 0.02), "z", 14.93, "1.0e-6", 12, 5, 460, 0.15, 0.025, 0.025),
+        ("link5", (0, 0, 0.02), "z", 14.93, "1.0e-6", 12, 5, 460, 0.025, 0.025),
         "cable through the wrist to the tool roll pulley",
     ),
 }
@@ -219,10 +225,12 @@ def link_xml(name: str) -> str:
 
 def drive_xml(joint: str) -> str:
     (spec, m_host, m_xyz, m_axis), gb, comment = DRIVES[joint]
-    mass, radius, length, rotor, peak, cont, stall, nl, kt, res = spec
-    gb_host, gb_xyz, gb_axis, ratio, gb_in, gb_peak, gb_rated, gb_max, gb_mass, gb_r, gb_l = gb
+    radius, length, rotor, peak, cont, stall, nl, kt, res = spec
+    mass, radius, length = motor_body_for(peak, radius, length, MOTOR_FORM)
+    gb_host, gb_xyz, gb_axis, ratio, gb_in, gb_peak, gb_rated, gb_max, gb_r, gb_l = gb
+    gb_mass, gb_r, gb_l = gearbox_body_for(gb_rated, ratio, gb_r, gb_l)
     return f"""    <drive>
-      <motor name="{joint}_motor" link="{m_host}" rotor_inertia="{rotor}"
+      <motor name="{joint}_motor" link="{m_host}" form="{MOTOR_FORM}" rotor_inertia="{rotor}"
              peak_torque="{g(peak)}" continuous_torque="{g(cont)}"
              stall_torque="{g(stall)}" no_load_speed="{g(nl)}"
              torque_constant="{g(kt)}" resistance="{g(res)}">

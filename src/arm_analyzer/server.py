@@ -23,6 +23,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from arm_analyzer.analysis import analyze
 from arm_analyzer.dynamics import GRAVITY, Payload
+from arm_analyzer.link_mass import LinkMassParams
 from arm_analyzer.robot import parse_arm
 from arm_analyzer.trajectory import load_trajectory
 
@@ -173,7 +174,12 @@ def api_analyze(body: dict) -> dict:
     ``{"mass", "tool_tip"?: name, "offset"?: [x, y, z]}`` -- the payload's
     centre of mass relative to that tool tip (default: the first one) -- and
     ``efficiency``: ``{joint: {"gearbox"?: eta, "transmission"?: eta}}``
-    overriding the file's efficiency placeholders for this analysis only.
+    overriding the file's efficiency placeholders for this analysis only, and
+    ``motor_mass`` and ``gearbox_mass`` ("declared" / "model") choosing whether
+    each motor and reducer weighs what the URDF says or what its rating
+    implies, and ``link_mass``
+    ``{"mode": "declared"/"derived", <LinkMassParams fields>}`` sizing the
+    structure as a tube per link plus a collar per mounted actuator.
     """
     arm = parse_arm(_text(body, "urdf"))
     if not arm.actuated:
@@ -226,7 +232,15 @@ def api_analyze(body: dict) -> dict:
         payload = Payload(link=link, mass=mass, com=com)
 
     result = analyze(
-        arm, plan, rate_hz=float(body.get("rate_hz") or 200.0), gravity=g, payload=payload
+        arm,
+        plan,
+        rate_hz=float(body.get("rate_hz") or 200.0),
+        gravity=g,
+        payload=payload,
+        motor_mass_mode=body.get("motor_mass") or "declared",
+        gearbox_mass_mode=body.get("gearbox_mass") or "declared",
+        link_mass_mode=(body.get("link_mass") or {}).get("mode") or "declared",
+        link_mass_params=LinkMassParams.from_dict(body.get("link_mass")),
     )
     result["warnings"] = arm.warnings
     return result
