@@ -288,6 +288,30 @@ def ik_model(arm: ArmDescription, tool: Optional[str]) -> tuple[pin.Model, str]:
     return model, tip["name"]
 
 
+class _SafeFrameTask(FrameTask):
+    """``FrameTask`` whose Jacobian survives Pinocchio 4.0's ``Jlog3`` NaN.
+
+    ``pin.Jlog3`` returns NaN for a rotation whose trace rounds to exactly 3
+    while its angle is not zero (~1e-8 rad), which a converging solve can
+    land on. The NaN poisons the QP and pink reports "no solution". Re-project
+    the rotation through ``exp3(log3(R))`` (same rotation to ~1e-16, different
+    bits) and, failing that, use the identity rotation, which is exact to
+    first order at such angles.
+    """
+
+    def compute_jacobian(self, configuration: pink.Configuration) -> np.ndarray:
+        J = super().compute_jacobian(configuration)
+        if np.isfinite(J).all():
+            return J
+        T = self.transform_target_to_world.actInv(configuration.get_transform_frame_to_world(self.frame))
+        J_frame = configuration.get_frame_jacobian(self.frame)
+        for R in (pin.exp3(pin.log3(T.rotation)), np.eye(3)):
+            J = -pin.Jlog6(pin.SE3(R, T.translation)) @ J_frame
+            if np.isfinite(J).all():
+                break
+        return J
+
+
 class _Tracker:
     """Sequential pink IK: one converged solve per target, warm-started."""
 
@@ -295,7 +319,7 @@ class _Tracker:
         self.model = model
         self.config = pink.Configuration(model, model.createData(), q0)
         self.frame = model.getFrameId(TOOL_FRAME)
-        self.task = FrameTask(TOOL_FRAME, position_cost=1.0, orientation_cost=1.0, lm_damping=1e-8)
+        self.task = _SafeFrameTask(TOOL_FRAME, position_cost=1.0, orientation_cost=1.0, lm_damping=1e-8)
         self.lower = model.lowerPositionLimit.copy()
         self.upper = model.upperPositionLimit.copy()
         # Pull toward the previous solution (see TRACKING_POSTURE_COST).
