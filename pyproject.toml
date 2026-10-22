@@ -68,6 +68,9 @@ uvicorn = ">=0.27"
 [tool.pixi.feature.dev.dependencies]
 pytest = ">=7.0"
 httpx = ">=0.25"
+# Runs the web/ modules in tests/test_frontend_*.py, which check them against
+# their Python counterparts; without it those tests skip.
+nodejs = ">=20"
 
 [tool.pixi.feature.dev.tasks]
 test = "pytest -q"

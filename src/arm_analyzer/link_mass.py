@@ -35,7 +35,7 @@ back into the torque the motion needs.
 **The defaults are a starting point, not a calibration.** ``baseline_diameter``
 is an absolute size, so one set of numbers cannot fit a 7 kg desktop arm and an
 80 kg palletizer of the same reach at once; on the bundled examples the default
-lands anywhere from 0.4x to 1.6x their declared structure. Tune it per robot --
+lands anywhere from 0.4x to 1.8x their declared structure. Tune it per robot --
 that is what the sliders are for -- and read the ratio the analysis reports
 against the declared mass as the gauge.
 

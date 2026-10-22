@@ -18,6 +18,10 @@ sheet -- 163 mm base, 425 mm upper arm, 392 mm forearm, 850 mm reach, about
 relying on it. Masses are split between structure and drive lumps to that
 total; motor and gear ratings are estimates sized to the published joint torque
 limits (150 N*m inner, 28 N*m wrist) and speeds (180 deg/s inner, 360 deg/s wrist).
+Those torque limits are *peak* figures: each gear unit's ``rated_torque`` is its
+continuous rating, set at peak / 2.3 like the other examples' harmonic drives
+(90 N*m inner, 17 N*m wrist). The gearbox mass law reads ``rated_torque`` as a
+continuous frame rating, so putting a peak figure there oversizes the frame.
 
 Zero pose: arm straight up, +X forward, flange pointing +Y. Losses are
 placeholders (efficiency 1.0) as in the other examples.
@@ -89,32 +93,32 @@ JOINTS = [
 DRIVES = {
     "j1": (
         (MOTOR_JOINT_BIG, "base_link", (0, 0, 0.055), "z"),
-        ("link1", (0, 0, 0.0), "z", 101, "8.0e-6", 210, 150, 500, 0.055, 0.035),
+        ("link1", (0, 0, 0.0), "z", 101, "8.0e-6", 210, 90, 500, 0.055, 0.035),
         "harmonic gear unit inside the shoulder module",
     ),
     "j2": (
         (MOTOR_JOINT_BIG, "link1", (0, 0.085, 0), "y"),
-        ("link2", (0, 0.02, 0.0), "y", 101, "8.0e-6", 210, 150, 500, 0.055, 0.035),
+        ("link2", (0, 0.02, 0.0), "y", 101, "8.0e-6", 210, 90, 500, 0.055, 0.035),
         "harmonic gear unit inside the shoulder-lift module",
     ),
     "j3": (
         (MOTOR_JOINT_MID, "link2", (0, -0.025, A2 - 0.02), "y"),
-        ("link3", (0, 0, 0.02), "y", 101, "5.0e-6", 210, 150, 500, 0.048, 0.03),
+        ("link3", (0, 0, 0.02), "y", 101, "5.0e-6", 210, 90, 500, 0.048, 0.03),
         "harmonic gear unit inside the elbow module",
     ),
     "j4": (
         (MOTOR_JOINT_SML, "link3", (0, 0.03, A3 - 0.03), "y"),
-        ("link4", (0, 0.02, 0), "y", 50, "1.5e-6", 40, 28, 650, 0.04, 0.025),
+        ("link4", (0, 0.02, 0), "y", 50, "1.5e-6", 40, 17, 650, 0.04, 0.025),
         "harmonic gear unit inside the wrist-1 module",
     ),
     "j5": (
         (MOTOR_JOINT_SML, "link4", (0, D4 - 0.03, 0.03), "z"),
-        ("link5", (0, 0, 0.02), "z", 50, "1.5e-6", 40, 28, 650, 0.04, 0.025),
+        ("link5", (0, 0, 0.02), "z", 50, "1.5e-6", 40, 17, 650, 0.04, 0.025),
         "harmonic gear unit inside the wrist-2 module",
     ),
     "j6": (
         (MOTOR_JOINT_SML, "link5", (0, 0.03, D5 - 0.03), "y"),
-        ("link6", (0, 0.01, 0), "y", 50, "1.5e-6", 40, 28, 650, 0.035, 0.02),
+        ("link6", (0, 0.01, 0), "y", 50, "1.5e-6", 40, 17, 650, 0.035, 0.02),
         "harmonic gear unit inside the wrist-3 module",
     ),
 }

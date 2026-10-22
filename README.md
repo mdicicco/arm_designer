@@ -342,101 +342,6 @@ Per joint, the summary reports:
 
 A joint is **marginal** above 80% and **over** above 100%.
 
-### Gearbox mass from the torque rating
-
-The same treatment for the reducers, from a second fit in `robot_arm_data`
-(`analyze_gearbox_mass.py`, `data/gearbox_data.csv`): **145 bare reducers** —
-not joint modules — spanning 4:1 to 111:1 and 0.4 to 784 N·m rated output, from
-Harmonic Drive CSF-2UH/LW, Nabtesco RV-E, Neugart PLE, Maxon GPX, NMRV worm
-boxes and AliExpress equivalents.
-
-```
-m = exp(a[type] + b·ln T_out + c·ln ratio)        m ∝ T_out^0.69 · ratio^-0.007
-```
-
-Two results carry the model:
-
-- **Ratio barely matters** (`c = −0.007`). Within a frame a harmonic drive
-  weighs the same at 30:1 as at 100:1 — the frame sets the mass, not the
-  gearing. Doubling the *rated output torque* costs about 1.6×.
-- **Type matters a lot.** At the same rating a worm box is roughly twice a
-  planetary. `<gearbox>` takes a `type=` attribute — `harmonic` (the default),
-  `cycloidal`, `planetary`, `worm` or `spur` — and each type carries its own
-  intercept and its own housing density (cycloidal 2062, harmonic 3083, worm
-  3758, spur 4623, planetary 4885 kg/m³, medians over the 106 rows listing OD
-  and length).
-
-This fit is much tighter than the motor one: **R² 0.92 on the logs, LOO R² 0.92,
-LOO MAE 0.58 kg** — a reducer's mass really is close to a function of its frame
-size. It covers the **gearbox only**, and like the motor law it reads the rating
-a part is *specified* to, not the torque a trajectory demands.
-
-`rated_torque` must be a **continuous** rating. Feeding it a peak figure sizes
-the frame far too large — a harmonic drive's peak output is typically 2–3× its
-continuous rating, so a `peak_torque / rated_torque` near 1 is the tell. See the
-validation section: this is exactly what the `ur_style_6dof` example does.
-
-### Link mass from geometry
-
-Link mass can likewise be an output rather than an input. The **Link mass**
-panel in the analysis options switches between the file's `<inertial>` blocks
-and a derived sizing, and carries sliders for the factors behind it. Each link
-becomes **one tube plus a collar per mounted actuator**:
-
-- **The tube** spans the link — from the joint attaching it to its parent (its
-  own frame origin) to the joint carrying the next link, or to the tool tip on
-  a tip link. That length comes out of the URDF kinematics; nothing invents it.
-  Its diameter tapers down the chain, because a shoulder carries the whole arm
-  and a wrist carries a gripper:
-
-  ```
-  d(link i of n) = baseline_diameter · taper^(i / (n−1))
-  ```
-
-  `taper = 1` is a constant-diameter arm; `taper = 0.4` gives a wrist tube 40%
-  of the base. The wall is `wall` thick, and a wall at least as thick as the
-  radius makes the link solid.
-- **A collar per actuator**, for the flanges and bearing seats that carry a
-  motor or gearbox: each lump mounted on the link adds
-  `actuator_mass + actuator_fraction · lump.mass` at that lump's own position,
-  taking the lump's shape — a cylinder around the mount point.
-  `actuator_fraction` is there because a bigger actuator needs a bigger boss.
-
-Mass follows from geometry and inertia with it: the tube's tensor is a hollow
-cylinder, each collar's is its shape scaled to its mass, and they combine
-through the parallel-axis theorem. The result replaces the link's `<inertial>`
-**in the Pinocchio model as well as in the budget** — link inertias otherwise
-reach Pinocchio through the URDF text, so a derived mass that only moved the
-budget would leave the torque curves describing a different robot.
-
-| Slider | Default | What it sets |
-|---|---|---|
-| Baseline Ø | 120 mm | Outside diameter of the base link's tube |
-| Distal taper | 0.50 | Tip diameter ÷ base diameter |
-| Wall | 8 mm | Tube wall; ≥ radius means solid |
-| Density | 2700 kg/m³ | Structural material (aluminium) |
-| Per actuator | 0.30 kg | Collar mass for each mounted motor or gearbox |
-| × actuator mass | 0.50 | Plus this much of the actuator's own mass |
-
-**The defaults are a starting point, not a calibration.** `baseline_diameter`
-is absolute, so one set of numbers cannot fit a 7 kg desktop arm and an 80 kg
-palletizer of the same reach at once — on the bundled examples the default
-lands between 0.36× and 1.55× the declared structure:
-
-| arm | declared | derived at defaults | ratio |
-|---|---|---|---|
-| `simple_6dof` | 7.45 kg | 11.58 | 1.55× |
-| `ur_style_6dof` | 12.95 kg | 13.92 | 1.07× |
-| `wam_style_7dof` | 18.75 kg | 14.47 | 0.77× |
-| `kr_style_6dof` | 32.90 kg | 18.07 | 0.55× |
-| `palletizer_4dof` | 56.50 kg | 20.16 | 0.36× |
-
-Tune per robot; the panel reports that ratio either way, so *declared* mode
-still tells you what the geometry would give. This is a **sizing** model, not a
-stress model: no load path, no buckling check, no joint housings, covers or
-cabling, and the drawn `<visual>` geometry is left alone — the tube is a
-structural idealisation of a link, not a claim about how it looks.
-
 ### Motor mass from the torque rating
 
 A motor's mass is largely set by the torque it is rated for and by how it is
@@ -490,6 +395,64 @@ needs a housing, bearings and a connector. The lightest part in the set is
 **8.3 g**; below a form's range the estimate keeps shrinking and only the
 extrapolation warning tells you.
 
+**Same answer on the examples.** The example arms declare no independent motor
+or gearbox mass: their generators set a rating and derive the mass from it (see
+*Example arms*), so *declared* and *from rating* agree on them. Switching only
+changes something for a URDF that declares masses of its own. When the model is
+applied, a lump's inertia tensor is scaled by the mass ratio, holding its shape
+and size fixed.
+
+**Read it as a ranking, not a specification.** A 30% median error is enough to
+compare two layouts and not enough to choose a part. It is also a one-way
+calculation: mass follows from the rating you set, not from the torque the
+trajectory demands. Sizing a motor to its demand changes the arm's mass, which
+changes the demand — that loop is yours to close by editing ratings and
+re-analysing.
+
+The constants live in `src/arm_analyzer/motor_mass.py` (and
+`gearbox_mass.py`, below) rather than being refitted at import, so this package
+stays self-contained. `web/motor_mass.js` and `web/gearbox_mass.js` mirror them
+for the inspector, and `tests/test_frontend_*_mass.py` run each pair against
+the other.
+
+### Gearbox mass from the torque rating
+
+The same treatment for the reducers, from a second fit in `robot_arm_data`
+(`analyze_gearbox_mass.py`, `data/gearbox_data.csv`): **145 bare reducers** —
+not joint modules — spanning 4:1 to 111:1 and 0.4 to 784 N·m rated output, from
+Harmonic Drive CSF-2UH/LW, Nabtesco RV-E, Neugart PLE, Maxon GPX, NMRV worm
+boxes and AliExpress equivalents.
+
+```
+m = exp(a[type] + b·ln T_out + c·ln ratio)        m ∝ T_out^0.69 · ratio^-0.007
+```
+
+Two results carry the model:
+
+- **Ratio barely matters** (`c = −0.007`). Within a frame a harmonic drive
+  weighs the same at 30:1 as at 100:1 — the frame sets the mass, not the
+  gearing. Doubling the *rated output torque* costs about 1.6×.
+- **Type matters a lot.** At the same rating a worm box is roughly twice a
+  planetary. `<gearbox>` takes a `type=` attribute — `harmonic` (the default),
+  `cycloidal`, `planetary`, `worm` or `spur` — and each type carries its own
+  intercept and its own housing density (cycloidal 2062, harmonic 3083, worm
+  3758, spur 4623, planetary 4885 kg/m³, medians over the 106 rows listing OD
+  and length).
+
+This fit is much tighter than the motor one: **R² 0.92 on the logs, LOO R² 0.92,
+LOO MAE 0.58 kg** — a reducer's mass really is close to a function of its frame
+size. It covers the **gearbox only**, and like the motor law it reads the rating
+a part is *specified* to, not the torque a trajectory demands.
+
+`rated_torque` must be a **continuous** rating. Feeding it a peak figure sizes
+the frame far too large — a harmonic drive's peak output is typically 2–3× its
+continuous rating, so a `peak_torque / rated_torque` near 1 is the tell. The
+`ur_style_6dof` example used to do exactly this; see the validation section.
+
+The harmonic rows are **housed units** (CSF-2UH: their own housing and output
+bearing). A joint whose housing and bearings are already in its link's mass —
+a component set built into a module, as in a cobot — will come out heavy.
+
 ### Link mass from geometry
 
 Link mass can likewise be an output rather than an input. The **Link mass**
@@ -535,15 +498,15 @@ budget would leave the torque curves describing a different robot.
 **The defaults are a starting point, not a calibration.** `baseline_diameter`
 is absolute, so one set of numbers cannot fit a 7 kg desktop arm and an 80 kg
 palletizer of the same reach at once — on the bundled examples the default
-lands between 0.36× and 1.55× the declared structure:
+lands between 0.42× and 1.83× the declared structure:
 
 | arm | declared | derived at defaults | ratio |
 |---|---|---|---|
-| `simple_6dof` | 7.45 kg | 11.58 | 1.55× |
-| `ur_style_6dof` | 12.95 kg | 13.92 | 1.07× |
-| `wam_style_7dof` | 18.75 kg | 14.47 | 0.77× |
-| `kr_style_6dof` | 32.90 kg | 18.07 | 0.55× |
-| `palletizer_4dof` | 56.50 kg | 20.16 | 0.36× |
+| `simple_6dof` | 7.45 kg | 13.63 | 1.83× |
+| `ur_style_6dof` | 12.95 kg | 18.00 | 1.39× |
+| `wam_style_7dof` | 18.75 kg | 16.10 | 0.86× |
+| `kr_style_6dof` | 32.90 kg | 21.41 | 0.65× |
+| `palletizer_4dof` | 56.50 kg | 23.79 | 0.42× |
 
 Tune per robot; the panel reports that ratio either way, so *declared* mode
 still tells you what the geometry would give. This is a **sizing** model, not a
@@ -551,68 +514,13 @@ stress model: no load path, no buckling check, no joint housings, covers or
 cabling, and the drawn `<visual>` geometry is left alone — the tube is a
 structural idealisation of a link, not a claim about how it looks.
 
-### Motor mass from the torque rating
+### Modelling limits
 
-A motor's mass is largely set by the torque it is rated for, so the arm's mass
-can be treated as an output of the drive sizing rather than a fixed input. The
-**Motor mass** control in the analysis options switches between:
-
-- **declared** — each motor weighs the `<mass>` in the URDF (the default);
-- **from torque rating** — each motor weighs what an empirical BLDC power law
-  predicts from its `peak_torque` (and `no_load_speed`), and the dynamics are
-  re-run on that arm, so every torque curve reflects the change.
-
-```
-m = exp(a + b·ln τ_peak + c·ln ω_max)        m ∝ τ^0.82 · ω^-0.04
-```
-
-Fitted by ordinary least squares over 51 motors with manufacturer-listed
-masses — CubeMars, Maxon, Faulhaber, Kollmorgen, Teknic, ODrive, T-Motor and
-OEM frameless/outrunner/hub parts — in the separate `robot_arm_data`
-repository (`analyze_motor_mass.py`, `data/bldc_motor_data.csv`). The constants
-live in `src/arm_analyzer/motor_mass.py` rather than being refitted at import,
-so this package stays self-contained; `web/motor_mass.js` mirrors them for the
-inspector and a test runs the two against each other.
-
-`b = 0.82` is the useful number: doubling a motor's torque rating costs about
-**1.8×** its mass, not 2×. The speed exponent is near zero on this dataset, so
-a motor that declares no speed costs little accuracy.
-
-**It is a frameless-motor law.** The fit pools every construction in the
-dataset, and they disagree: actual ÷ predicted runs about **0.57× for frameless**
-(18 of 51 rows), 0.70–0.80× for outrunner/flat/inrunner, ~1.0× for hub, but
-**1.8× for industrial** and **2.3× for integrated** servos. Most of the data is
-at the frameless end, so that is where the law sits — an arm built from housed
-industrial servos will come out roughly half its real motor mass. The example
-arms here declare masses 1.6–3× the prediction, which is consistent with them
-being specified as industrial parts. Splitting the fit by form factor belongs
-in `robot_arm_data`, where the data is.
-
-The example arms declare **no independent motor mass**: their generators set a
-torque rating and derive the mass from it, so the two modes give the same answer
-on them and there is no circular reference to resolve. Switching to
-*from torque rating* only changes something for a URDF that declares a mass of
-its own.
-
-**Read it as a ranking, not a specification.** Leave-one-out error is **±0.66 kg**
-per motor (R² 0.75 on the logs), which is enough to compare two layouts and not
-enough to choose a part. It covers the **motor only** — gearboxes keep their
-declared mass, since the dataset does not cover them. Ratings outside the
-fitted range (0.15–98 N·m, 400–97 000 rpm) are flagged as extrapolation. When
-the model is applied, a lump's inertia tensor is scaled by the mass ratio,
-holding its shape and size fixed.
-
-Note this is a one-way calculation: mass follows from the rating you set, not
-from the torque the trajectory demands. Sizing a motor to its demanded torque
-changes the arm's mass, which changes the demand — that loop is yours to close
-by editing ratings and re-analysing.
-
-**Modelling limits.** Losses are only the two efficiency placeholders (no
-friction model). The rotor is a reflected inertia on its own axis; its
-gyroscopic coupling with the host link is ignored. Transmissions are ideal
-and decoupled: a belt routed through an intermediate joint doesn't make the
-driven joint depend on that joint's angle. Only box, cylinder and sphere
-geometry is drawn; mesh visuals are skipped.
+Losses are only the two efficiency placeholders (no friction model). The rotor
+is a reflected inertia on its own axis; its gyroscopic coupling with the host
+link is ignored. Transmissions are ideal and decoupled: a belt routed through an
+intermediate joint doesn't make the driven joint depend on that joint's angle.
+Only box, cylinder and sphere geometry is drawn; mesh visuals are skipped.
 
 ## Layout
 
@@ -634,6 +542,7 @@ geometry is drawn; mesh visuals are skipped.
 | `examples/robots/` | Example arms, see below |
 | `examples/trajectories/` | `default_pick_place.json` and `workspace_tour.json` (cartesian, any robot), `pick_and_place.json` and `kr_pick_and_place.json` (joint waypoints), `sine_sweep.csv` (100 Hz samples) |
 | `scripts/` | Generators for the example robots and trajectories (`pixi run examples`); `urdf_parts.py` holds the shared URDF writers |
+| `tests/` | pytest: hand-calculated torques, an energy balance, RNEA/CRBA consistency, JS-vs-Pinocchio kinematics, JS-vs-Python for the differential region and the motor- and gearbox-mass models, and the examples against their real counterparts' datasheets |
 
 ### Example arms
 
@@ -641,10 +550,10 @@ geometry is drawn; mesh visuals are skipped.
 |---|---|
 | `simple_6dof.urdf` | ~1 m test arm, primitive geometry, every drive co-located on its joint's parent link |
 | `simple_6dof_remote_elbow.urdf` | The same arm with the elbow drive moved back onto the shoulder link, driving through a belt |
-| `kr_style_6dof.urdf` | KUKA KR-series-style layout at KR 6 R900 (KR AGILUS) scale, ~46 kg: the A4–A6 motors sit at the rear of the arm housing behind the elbow and reach their gear units (front of the housing, wrist, flange) through shafts in the forearm. Use it with `kr_pick_and_place.json` (zero pose: upper arm vertical, forearm horizontal). Geometry is approximated from public specs; drive ratings are estimates, not KUKA data. |
-| `wam_style_7dof.urdf` | Barrett WAM-style cable arm, 7 axes, ~24 kg: M1–M3 sit **in the base**, so 9 kg of the robot is carried by the floor and not by any joint. J2/J3 and J5/J6 are driven through **differentials** (`<drive_coupling>`), which is the layout to look at if you want to see two motors sharing one heavy axis. Its ±90° wrist cannot reach the tool-out and tool-up poses of `workspace_tour.json`. |
-| `ur_style_6dof.urdf` | UR5e-style collaborative arm, ~19 kg, 5 kg payload: an offset wrist and a self-contained module at **every** joint, so the whole drivetrain rides on the arm. The baseline the two remote-drive layouts above are worth comparing against. |
-| `palletizer_4dof.urdf` | Palletizer, ~73 kg, 20 kg payload: J1–J3's motors all sit on the pedestal and push the arm through rods, and **two parallelogram linkages** (`<mimic>`) keep the tool plate level, so there is no wrist pitch and only 4 actuated axes. It can follow any tool-down path, and nothing else. |
+| `kr_style_6dof.urdf` | KUKA KR-series-style layout at KR 6 R900 (KR AGILUS) scale, ~53 kg: the A4–A6 motors sit at the rear of the arm housing behind the elbow and reach their gear units (front of the housing, wrist, flange) through shafts in the forearm. Use it with `kr_pick_and_place.json` (zero pose: upper arm vertical, forearm horizontal). Geometry is approximated from public specs; drive ratings are estimates, not KUKA data. |
+| `wam_style_7dof.urdf` | Barrett WAM-style cable arm, 7 axes, ~27 kg: M1–M3 sit **in the base**, so 9 kg of the robot is carried by the floor and not by any joint. J2/J3 and J5/J6 are driven through **differentials** (`<drive_coupling>`), which is the layout to look at if you want to see two motors sharing one heavy axis. Its ±90° wrist cannot reach the tool-out and tool-up poses of `workspace_tour.json`. |
+| `ur_style_6dof.urdf` | UR5e-style collaborative arm, ~27 kg (the real one is 20.6 kg — see validation), 5 kg payload: an offset wrist and a self-contained module at **every** joint, so the whole drivetrain rides on the arm. The baseline the two remote-drive layouts above are worth comparing against. |
+| `palletizer_4dof.urdf` | Palletizer, ~80 kg, 20 kg payload: J1–J3's motors all sit on the pedestal and push the arm through rods, and **two parallelogram linkages** (`<mimic>`) keep the tool plate level, so there is no wrist pitch and only 4 actuated axes. It can follow any tool-down path, and nothing else. |
 
 Geometry for the last four is approximated from public specs; drive ratings are
 estimates, not manufacturer data. **Every example motor's mass is derived from its
@@ -669,7 +578,6 @@ a couple of percent of their datasheets. Every transmission is modelled as
 ideal and decoupled unless a `<drive_coupling>` says otherwise: on a real
 in-line wrist like the KR's, A4 rotation also turns the A5 and A6 shafts, so
 those motor angles are coupled in a way this file does not describe.
-| `tests/` | pytest: hand-calculated torques, an energy balance, RNEA/CRBA consistency, JS-vs-Pinocchio kinematics, and JS-vs-Python for the differential region and the motor-mass model |
 
 ### Validation against the real robots
 
@@ -688,7 +596,7 @@ which drifts further fails loudly. Retrieved 2026-09-20.
 | reach (to plate) | 915 mm | 910 mm | ✅ +0.5% |
 | link lengths | 346 / 550 / 45 / 300 / 60 mm | identical | ✅ exact |
 | joint ranges | 7 axes | 6 of 7 exact, J5 rounded | ✅ |
-| **UR5e** — mass | 30.95 kg | 20.6 kg | ❌ **+50%** |
+| **UR5e** — mass | 26.80 kg | 20.6 kg | ❌ **+30%** |
 | reach (flange, geometric) | 925 mm | 850 mm rated | envelope vs geometry |
 | link lengths | d1 162.5, a2 425, a3 392.2, d4 133.3, d5 99.7, d6 99.6 mm | identical | ✅ exact |
 | joint ranges | ±360° (elbow ±160°) | ±360° all | elbow deliberately tighter |
@@ -706,15 +614,18 @@ gearboxes by rating:
   raised it above the hand-set values, and giving each motor its real `form`
   — the KUKA's housed industrial servos are 2.9× a frameless motor of the same
   rating, which is most of the gap the earlier pooled fit left open.
-- **The UR5e is the exception, and it is a fault in that example.** Its
-  gearboxes declare `rated_torque = 150 N·m` on the inner joints — the UR5e's
-  *peak* joint torque, not a reducer's continuous rating. The giveaway is
-  `peak_torque / rated_torque = 1.40`, where the KR and WAM sit at 2.3. The
-  mass law reads `rated_torque` as a frame rating, sizes those three joints as
-  3.5 kg reducers, and the drives end up 58% of the whole arm.
-  `tests/test_reference_specs.py` marks this `xfail(strict=True)` under
-  `OVERWEIGHT_BY_RATING`, so it will flag the moment the ratings are corrected
-  in `scripts/make_ur_style.py`.
+- **The UR5e is the exception.** It started at +50% because its gearboxes
+  declared `rated_torque = 150 N·m` on the inner joints — the UR5e's *peak*
+  joint torque, not a reducer's continuous rating (`peak_torque / rated_torque`
+  was 1.40, where the KR and WAM sit at 2.3). With continuous ratings of 90 N·m
+  inner and 17 N·m wrist it is at **+30%**, and motors plus gearboxes are still
+  52% of the arm. What remains is the gearbox law: it is fitted to housed
+  harmonic units, which puts 2.5 kg on each inner joint, while a UR joint
+  module's housing and bearings are already in this example's link masses.
+  Closing it needs a lighter component-set gearbox type or link masses re-split
+  around the derived drives. `tests/test_reference_specs.py` marks both mass
+  checks `xfail(strict=True)` under `OVERWEIGHT_GEAR_UNITS`, so they flag the
+  moment the arm comes within tolerance.
 
 Reach is quoted differently by different manufacturers — to the flange, to the
 mounting plate, or as a rated working envelope — so the reference records which

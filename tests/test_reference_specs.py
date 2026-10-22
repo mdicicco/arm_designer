@@ -12,8 +12,8 @@ the test says so and says why rather than being silently loosened.
 As of 2026-09-21, with gearbox masses derived from their ratings and motor
 masses from their rating **and construction** (the per-form BLDC fit), the KR
 lands within **1%** of the real robot and the WAM within **2%**. The UR5e comes
-out 50% heavy because of how its own gearbox ratings are written -- see
-``OVERWEIGHT_BY_RATING``.
+out 30% heavy because the gearbox mass law describes a different kind of
+reducer than the one its joints use -- see ``OVERWEIGHT_GEAR_UNITS``.
 """
 
 from __future__ import annotations
@@ -35,15 +35,17 @@ from reference_specs import REFERENCE
 MASS_TOLERANCE = 0.05
 REACH_SAMPLES = 20000
 
-# KNOWN GAP, ur_style_6dof: its gearboxes declare rated_torque = 150 N*m on the
-# inner joints, which is the UR5e's *peak* joint torque, not a reducer's
-# continuous rating -- peak/rated comes out at 1.40 where the KR and WAM
-# examples sit at 2.3, the usual figure for a harmonic drive. The gearbox mass
-# law reads rated_torque as a continuous frame rating, so those three joints
-# are sized as 3.5 kg reducers and the arm lands 38% heavy. Fix the ratings in
-# scripts/make_ur_style.py; this xfail is strict, so it will flag the moment
-# they are.
-OVERWEIGHT_BY_RATING = {"ur_style_6dof.urdf"}
+# KNOWN GAP, ur_style_6dof: the arm lands 30% heavy (26.8 kg vs 20.6 kg) and
+# its drives are 52% of it. Its gear ratings are now continuous figures (peak /
+# rated = 2.33, like the KR and WAM; they used to carry the 150 N*m peak, which
+# put it at +50%), so what remains is the gearbox mass law itself: it is fitted
+# to *housed* harmonic units (CSF-2UH -- own housing and output bearing), which
+# gives 2.5 kg for each 90 N*m inner gear. A UR joint module's housing and
+# bearings are already in this example's link masses, so the lump double-counts
+# them. Closing it needs either a lighter, component-set gearbox type or link
+# masses re-split around the derived drives; both xfails are strict, so they
+# flag the moment the arm comes within tolerance.
+OVERWEIGHT_GEAR_UNITS = {"ur_style_6dof.urdf"}
 
 
 @pytest.fixture(scope="module", params=sorted(REFERENCE))
@@ -94,13 +96,12 @@ def test_mass_is_within_tolerance(case, request):
 
     With gearbox masses from their ratings and motor masses from rating and
     construction, the KR lands within 1% and the WAM within 2%. The UR5e does
-    not, for a reason in its own ratings rather than in either mass law -- see
-    ``OVERWEIGHT_BY_RATING``.
+    not -- see ``OVERWEIGHT_GEAR_UNITS``.
     """
     filename, arm, spec = case
-    if filename in OVERWEIGHT_BY_RATING:
+    if filename in OVERWEIGHT_GEAR_UNITS:
         request.node.add_marker(
-            pytest.mark.xfail(strict=True, reason="see OVERWEIGHT_BY_RATING")
+            pytest.mark.xfail(strict=True, reason="see OVERWEIGHT_GEAR_UNITS")
         )
     got = arm.mass_budget()["total"]
     want = spec["mass_kg"]
@@ -110,14 +111,16 @@ def test_mass_is_within_tolerance(case, request):
     )
 
 
-def test_drive_mass_is_a_plausible_share_of_the_arm(case):
+def test_drive_mass_is_a_plausible_share_of_the_arm(case, request):
     """Motors plus reducers should be a substantial minority of an arm, not a
     rounding error and not most of it. This is the sanity check that catches a
-    mass law being fed the wrong quantity -- it is what the UR5e's peak-torque
-    gearbox ratings trip."""
+    mass law being fed the wrong quantity, or describing the wrong kind of
+    part -- the UR5e's housed-unit gearbox masses trip it."""
     filename, arm, spec = case
-    if filename in OVERWEIGHT_BY_RATING:
-        pytest.xfail("see OVERWEIGHT_BY_RATING")
+    if filename in OVERWEIGHT_GEAR_UNITS:
+        request.node.add_marker(
+            pytest.mark.xfail(strict=True, reason="see OVERWEIGHT_GEAR_UNITS")
+        )
     budget = arm.mass_budget()
     drive_share = (budget["motors"] + budget["gearboxes"]) / budget["total"]
     assert 0.05 < drive_share < 0.45, (
@@ -132,8 +135,6 @@ def test_gearbox_peak_to_rated_ratio_is_realistic(case):
     rating. A ratio near 1 means ``rated_torque`` is carrying a peak figure,
     which the gearbox mass law will read as a much larger frame."""
     filename, arm, spec = case
-    if filename in OVERWEIGHT_BY_RATING:
-        pytest.xfail("see OVERWEIGHT_BY_RATING")
     for name, drive in arm.drives.items():
         gs = drive.gearbox_spec
         if not (gs.peak_torque and gs.rated_torque):

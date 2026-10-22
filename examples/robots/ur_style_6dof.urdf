@@ -33,11 +33,11 @@
         <geometry><cylinder radius="0.0358995" length="0.0708544"/></geometry>
       </motor>
       <gearbox name="j1_gear_unit" link="link1" ratio="101" efficiency="1.00"
-               input_inertia="8.0e-6" peak_torque="210" rated_torque="150"
+               input_inertia="8.0e-6" peak_torque="210" rated_torque="90"
                max_input_speed="500">
         <origin xyz="0 0 0" rpy="0 0 0"/>
-        <mass value="3.55832"/>
-        <geometry><cylinder radius="0.0832668" length="0.052988"/></geometry>
+        <mass value="2.49999"/>
+        <geometry><cylinder radius="0.0740235" length="0.0471059"/></geometry>
       </gearbox>
       <!-- harmonic gear unit inside the shoulder module -->
       <transmission ratio="1" efficiency="1.00"/>
@@ -72,11 +72,11 @@
         <geometry><cylinder radius="0.0358995" length="0.0708544"/></geometry>
       </motor>
       <gearbox name="j2_gear_unit" link="link2" ratio="101" efficiency="1.00"
-               input_inertia="8.0e-6" peak_torque="210" rated_torque="150"
+               input_inertia="8.0e-6" peak_torque="210" rated_torque="90"
                max_input_speed="500">
         <origin xyz="0 0.02 0" rpy="-1.570796 0 0"/>
-        <mass value="3.55832"/>
-        <geometry><cylinder radius="0.0832668" length="0.052988"/></geometry>
+        <mass value="2.49999"/>
+        <geometry><cylinder radius="0.0740235" length="0.0471059"/></geometry>
       </gearbox>
       <!-- harmonic gear unit inside the shoulder-lift module -->
       <transmission ratio="1" efficiency="1.00"/>
@@ -111,11 +111,11 @@
         <geometry><cylinder radius="0.0344709" length="0.0700191"/></geometry>
       </motor>
       <gearbox name="j3_gear_unit" link="link3" ratio="101" efficiency="1.00"
-               input_inertia="5.0e-6" peak_torque="210" rated_torque="150"
+               input_inertia="5.0e-6" peak_torque="210" rated_torque="90"
                max_input_speed="500">
         <origin xyz="0 0 0.02" rpy="-1.570796 0 0"/>
-        <mass value="3.55832"/>
-        <geometry><cylinder radius="0.0837685" length="0.0523553"/></geometry>
+        <mass value="2.49999"/>
+        <geometry><cylinder radius="0.0744694" length="0.0465434"/></geometry>
       </gearbox>
       <!-- harmonic gear unit inside the elbow module -->
       <transmission ratio="1" efficiency="1.00"/>
@@ -150,11 +150,11 @@
         <geometry><cylinder radius="0.028606" length="0.0550116"/></geometry>
       </motor>
       <gearbox name="j4_gear_unit" link="link4" ratio="50" efficiency="1.00"
-               input_inertia="1.5e-6" peak_torque="40" rated_torque="28"
+               input_inertia="1.5e-6" peak_torque="40" rated_torque="17"
                max_input_speed="650">
         <origin xyz="0 0.02 0" rpy="-1.570796 0 0"/>
-        <mass value="1.12097"/>
-        <geometry><cylinder radius="0.0569986" length="0.0356241"/></geometry>
+        <mass value="0.794035"/>
+        <geometry><cylinder radius="0.0508096" length="0.031756"/></geometry>
       </gearbox>
       <!-- harmonic gear unit inside the wrist-1 module -->
       <transmission ratio="1" efficiency="1.00"/>
@@ -189,11 +189,11 @@
         <geometry><cylinder radius="0.028606" length="0.0550116"/></geometry>
       </motor>
       <gearbox name="j5_gear_unit" link="link5" ratio="50" efficiency="1.00"
-               input_inertia="1.5e-6" peak_torque="40" rated_torque="28"
+               input_inertia="1.5e-6" peak_torque="40" rated_torque="17"
                max_input_speed="650">
         <origin xyz="0 0 0.02" rpy="0 0 0"/>
-        <mass value="1.12097"/>
-        <geometry><cylinder radius="0.0569986" length="0.0356241"/></geometry>
+        <mass value="0.794035"/>
+        <geometry><cylinder radius="0.0508096" length="0.031756"/></geometry>
       </gearbox>
       <!-- harmonic gear unit inside the wrist-2 module -->
       <transmission ratio="1" efficiency="1.00"/>
@@ -228,11 +228,11 @@
         <geometry><cylinder radius="0.028606" length="0.0550116"/></geometry>
       </motor>
       <gearbox name="j6_gear_unit" link="link6" ratio="50" efficiency="1.00"
-               input_inertia="1.5e-6" peak_torque="40" rated_torque="28"
+               input_inertia="1.5e-6" peak_torque="40" rated_torque="17"
                max_input_speed="650">
         <origin xyz="0 0.01 0" rpy="-1.570796 0 0"/>
-        <mass value="1.12097"/>
-        <geometry><cylinder radius="0.0587268" length="0.0335582"/></geometry>
+        <mass value="0.794035"/>
+        <geometry><cylinder radius="0.0523502" length="0.0299144"/></geometry>
       </gearbox>
       <!-- harmonic gear unit inside the wrist-3 module -->
       <transmission ratio="1" efficiency="1.00"/>
